@@ -1,7 +1,7 @@
 from django.urls import include, path
 
-from .views import FetchData
+from .views import FetchPollenData
 
 urlpatterns = [
-    path('fetch-data/', FetchData.as_view(), name='fetch_data'),
+    path('fetch-data/', FetchPollenData.as_view(), name='fetch_data'),
 ]

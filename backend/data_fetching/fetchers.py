@@ -6,7 +6,7 @@ load_dotenv() # This loads variables from your .env.dev file
 API_KEY = os.getenv("GOOGLE_API_KEY")  # You might want to rename this to GOOGLE_API_KEY
 
 
-def fetch_pollen_data(latitude, longitude, days=3):
+def fetch_pollen_data(latitude, longitude, days=1):
     url = "https://pollen.googleapis.com/v1/forecast:lookup"
     
     try:
