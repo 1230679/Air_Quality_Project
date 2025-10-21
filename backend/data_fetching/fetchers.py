@@ -76,7 +76,6 @@ def get_hourly_weather_history(latitude, longitude, hours=12, start_time=None, e
     Retrieve hourly historical weather data from the Google Weather API.
 
     Args:
-        api_key (str): Your Google API key.
         latitude (float): Latitude of the location.
         longitude (float): Longitude of the location.
         hours (int, optional): Number of hours of history to fetch (default 24 if None).
@@ -88,7 +87,7 @@ def get_hourly_weather_history(latitude, longitude, hours=12, start_time=None, e
     """
     base_url = "https://weather.googleapis.com/v1/history/hours:lookup"
     params = {
-        "key": api_key,
+        "key": API_KEY,
         "location.latitude": latitude,
         "location.longitude": longitude,
     }
