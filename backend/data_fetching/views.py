@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from pprint import pprint
-from .fetchers import fetch_pollen_data, fetch_air_quality_data, get_hourly_weather_history
+from .fetchers import fetch_pollen_data, fetch_air_quality_data, fetch_weather_data
 # Create your views here.
 
 
@@ -60,5 +60,39 @@ class FetchPollenData(APIView):
             pprint(filtered_data)
             return Response({"pollen": filtered_data}, status=status.HTTP_200_OK)
         return Response({"error": "Failed to fetch data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class FetchAirQualityData(APIView):
+    renderer_classes = [JSONRenderer]
+
+    latitude = 56.157200
+    longitude = 10.210700
+
+    start_time = "2025-06-15T08:00:00Z"
+    end_time = "2025-06-15T12:00:00Z"
+
+    def get(self, request, *args, **kwargs):
+        aq_data = fetch_air_quality_data(latitude=self.latitude, longitude=self.longitude, hours=240)
+        if aq_data:
+            pprint(aq_data)
+            return Response({"air_quality": aq_data}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to fetch air quality data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class FetchWeatherData(APIView):
+    renderer_classes = [JSONRenderer]
+
+    latitude = 56.157200
+    longitude = 10.210700
+
+    start_time = "2025-06-15T08:00:00Z"
+    end_time = "2025-06-15T12:00:00Z"
+
+    def get(self, request, *args, **kwargs):
+        weather_data = fetch_weather_data(latitude=self.latitude, longitude=self.longitude, hours=10)
+        if weather_data:
+            pprint(weather_data)
+            return Response({"weather": weather_data}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to fetch weather data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
