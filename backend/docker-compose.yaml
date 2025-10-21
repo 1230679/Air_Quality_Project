@@ -5,24 +5,37 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data
     env_file:
       - .env.dev
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=airqualitydb
     ports:
       - "5432:5432"
+    restart: always
 
   backend-dev:
     build: .
     restart: always
-    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...'
+        sleep 10
+        python manage.py makemigrations && 
+        python manage.py migrate && 
+        python manage.py runserver 0.0.0.0:8000
+      "
     volumes:
       - .:/code
     env_file:
       - .env.dev
     environment:
       - DOCKER_NODE_PORT=5173
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_NAME=airqualitydb
     ports:
       - "8000:8000"
     depends_on:
-      - db-dev
-    links:
       - db-dev
 
 volumes:

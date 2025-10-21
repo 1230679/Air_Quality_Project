@@ -40,18 +40,18 @@ def fetch_air_quality_data(latitude, longitude, start_time, end_time, page_size=
     Returns:
         list: A list of hourly air quality records (each as a dict).
     """
-    url = f"https://airquality.googleapis.com/v1/history:lookup?key={API_KEY}"
+    url = f"https://airquality.googleapis.com/v1/currentConditions:lookup?key={API_KEY}"
     all_results = []
     page_token = ""
 
     while True:
         body = {
-            "period": {
-                "startTime": start_time,
-                "endTime": end_time
-            },
-            "pageSize": page_size,
-            "pageToken": page_token,
+            # "period": {
+            #     "startTime": start_time,
+            #     "endTime": end_time
+            # },
+            # "pageSize": page_size,
+            # "pageToken": page_token,
             "location": {
                 "latitude": latitude,
                 "longitude": longitude
@@ -62,14 +62,34 @@ def fetch_air_quality_data(latitude, longitude, start_time, end_time, page_size=
         response.raise_for_status()
         data = response.json()
 
-        if "hoursInfo" in data:
-            all_results.extend(data["hoursInfo"])
+        return data
 
-        page_token = data.get("nextPageToken")
-        if not page_token:
-            break
+    #     if "hoursInfo" in data:
+    #         all_results.extend(data["hoursInfo"])
 
-    return all_results
+    #     page_token = data.get("nextPageToken")
+    #     if not page_token:
+    #         break
+
+    # return all_results
+
+def fetch_weather_data(latitude, longitude):
+    url = f"https://weather.googleapis.com/v1/currentConditions:lookup"
+    
+    try:
+        params = {
+            'key': API_KEY,
+            'location.latitude': latitude,
+            'location.longitude': longitude
+        }
+        
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching weather data: {e}")
+        return None
 
 def get_hourly_weather_history(latitude, longitude, hours=12, start_time=None, end_time=None):
     """
