@@ -1,11 +1,13 @@
 from django.shortcuts import render
+from data_fetching.aqi import AirQualityIndex
+from data_fetching.location import Location
+from data_fetching.weather import Weather
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from pprint import pprint
 from .fetchers import fetch_pollen_data, fetch_air_quality_data, fetch_weather_data
-# Create your views here.
 
 
 class FetchPollenData(APIView):
@@ -64,16 +66,23 @@ class FetchPollenData(APIView):
 class FetchAirQualityData(APIView):
     renderer_classes = [JSONRenderer]
 
+    aqi = AirQualityIndex()
+
     latitude = 56.157200
     longitude = 10.210700
 
-    start_time = "2025-06-15T08:00:00Z"
-    end_time = "2025-06-15T12:00:00Z"
+    location = Location()
+    location = location.fill_db(location=f"{latitude},{longitude}", city="Aarhus", country="Denmark")
 
     def get(self, request, *args, **kwargs):
-        aq_data = fetch_air_quality_data(latitude=self.latitude, longitude=self.longitude, hours=240)
+        aq_data = self.aqi.fetch_aqi_history(
+            location={"latitude": self.latitude, "longitude": self.longitude},
+            hours=2,
+            extraComputations=[self.aqi.ExtraComputations.POLLUTANT_CONCENTRATION]
+        )
         if aq_data:
             pprint(aq_data)
+            self.aqi.fill_db(location=self.location, response=aq_data)
             return Response({"air_quality": aq_data}, status=status.HTTP_200_OK)
         return Response({"error": "Failed to fetch air quality data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -87,10 +96,18 @@ class FetchWeatherData(APIView):
     start_time = "2025-06-15T08:00:00Z"
     end_time = "2025-06-15T12:00:00Z"
 
+    weather = Weather()
+    location = Location()
+    location = location.fill_db(location=f"{latitude},{longitude}", city="Aarhus", country="Denmark")
+
     def get(self, request, *args, **kwargs):
-        weather_data = fetch_weather_data(latitude=self.latitude, longitude=self.longitude, hours=10)
+        weather_data = self.weather.fetch_weather_data(
+            location={"latitude": self.latitude, "longitude": self.longitude},
+            hours=2
+        )
         if weather_data:
             pprint(weather_data)
+            self.weather.fill_db(location=self.location, response=weather_data)
             return Response({"weather": weather_data}, status=status.HTTP_200_OK)
         return Response({"error": "Failed to fetch weather data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
