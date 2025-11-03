@@ -2,8 +2,7 @@ import os
 import requests
 from .models import WeatherData
 from django.utils.dateparse import parse_datetime
-
-API_KEY = os.getenv("GOOGLE_API_KEY")  # You might want to rename this to GOOGLE_WEATHER_API_KEY
+from .config import API_KEY
 
 class Weather:
     def __init__(self):
@@ -36,7 +35,13 @@ class Weather:
     def fetch_weather_data(self, location, hours, pageSize=5):
         """
         Fetch hourly historical weather data from Google Weather API.
-
+        
+        Args:
+            location (dict): Dictionary with 'latitude' and 'longitude' keys.
+            hours (int): Number of hours of history to fetch.
+            pageSize (int, optional): Number of results per page. Defaults to 5.
+        Returns:
+            dict: Parsed JSON response containing historical weather data.
         """
         
         url = f"{self.baseUrl}/history:lookup?key={API_KEY}"

@@ -3,8 +3,8 @@ import requests
 import os
 from .models import AirQualityData
 from django.utils.dateparse import parse_datetime
+from .config import API_KEY
 
-API_KEY = os.getenv("GOOGLE_API_KEY")  # You might want to rename this to GOOGLE_API_KEY
 class AirQualityIndex:
     def __init__(self):
         self.baseUrl = "https://airquality.googleapis.com/v1/"
