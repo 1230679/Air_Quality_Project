@@ -9,6 +9,12 @@ services:
       - "5432:5432"
     restart: always
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
   backend-dev:
     build: .
     restart: always
@@ -16,7 +22,7 @@ services:
       sh -c "
         echo 'Waiting for PostgreSQL...'
         sleep 10
-        python manage.py makemigrations &&
+        python manage.py makemigrations --noinput &&
         python manage.py migrate &&
         python manage.py runserver 0.0.0.0:8000
       "
@@ -28,6 +34,31 @@ services:
       - "8000:8000"
     depends_on:
       - db-dev
+      - redis
+
+  celery:
+    build: .
+    restart: always
+    command: celery -A airqualityapi worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - db-dev
+      - redis
+
+  celery-beat:
+    build: .
+    restart: always
+    command: celery -A airqualityapi beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - db-dev
+      - redis
 
 volumes:
     postgres_data_dev:
