@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .tasks import fetch_air_quality_data, process_air_quality_data, test_celery_task
 from celery.result import AsyncResult
+from celery import chain
 
 
 class FetchPollenData(APIView):
@@ -99,6 +100,24 @@ class FetchWeatherData(APIView):
             self.weather.fill_db(location=location_obj, response=weather_data)
             return Response({"weather": weather_data}, status=status.HTTP_200_OK)
         return Response({"error": "Failed to fetch weather data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@require_http_methods(["GET"])
+def trigger_air_quality_fetch(request):
+    """
+    Trigger the celery workflow to fetch and process air quality data
+    """
+    workflow = chain(
+        fetch_air_quality_data.s(),
+        process_air_quality_data.s()
+    )
+    result = workflow.apply_async()
+
+    return JsonResponse({
+        "message": "Air quality fetch enqueued",
+        "task_id": result.id,
+        "status_url": f"/data-fetching/task-status/{result.id}/"
+    })
+
 
 
 @require_http_methods(["GET"])
