@@ -9,6 +9,11 @@ from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from pprint import pprint
 from .fetchers import fetch_pollen_data, fetch_air_quality_data, fetch_weather_data
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .tasks import fetch_air_quality_data, process_air_quality_data, test_celery_task
+from celery.result import AsyncResult
+
 
 class FetchPollenData(APIView):
     # Force JSON-only responses
@@ -94,6 +99,44 @@ class FetchWeatherData(APIView):
             self.weather.fill_db(location=location_obj, response=weather_data)
             return Response({"weather": weather_data}, status=status.HTTP_200_OK)
         return Response({"error": "Failed to fetch weather data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@require_http_methods(["GET"])
+def test_celery(request):
+    """
+    Test if Celery is working
+    """
+    task = test_celery_task.delay()
+    
+    return JsonResponse({
+        'message': 'Celery test task triggered!',
+        'task_id': task.id,
+        'status': 'Task is running...',
+        'check_status_at': f'http://localhost:8000/data-fetching/task-status/{task.id}/'
+    })
+
+@require_http_methods(["GET"])
+def task_status(request, task_id):
+    """
+    Check the status of a Celery task
+    """
+    from celery.result import AsyncResult
+    
+    task_result = AsyncResult(task_id)
+    
+    response = {
+        'task_id': task_id,
+        'status': task_result.status,
+        'ready': task_result.ready()
+    }
+    
+    if task_result.ready():
+        if task_result.successful():
+            response['result'] = task_result.result
+        else:
+            response['error'] = str(task_result.info)
+    
+    return JsonResponse(response)
 
 
 
