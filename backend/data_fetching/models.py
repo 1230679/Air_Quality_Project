@@ -51,7 +51,6 @@ class WeatherData(models.Model):
     apparent_temperature = models.FloatField(null=True, blank=True)
     humidity = models.FloatField(null=True, blank=True)
     wind_speed = models.FloatField(null=True, blank=True)
-    weather_code = models.IntegerField(null=True, blank=True)
     uv_index = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
