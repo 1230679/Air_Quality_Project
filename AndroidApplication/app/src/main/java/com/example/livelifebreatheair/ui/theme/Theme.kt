@@ -1,55 +1,48 @@
 package com.example.livelifebreatheair.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = CardYellow,
-    secondary = PillYellow,
-    tertiary = OutlineYellow,
-    background = CreamBackground,
+    primary = CardGrey,
+    onPrimary = TextOnLight,
+    primaryContainer = CardGrey,
+    onPrimaryContainer = TextOnLight,
+    secondaryContainer = CardLightGrey,
+    onSecondaryContainer = TextOnLight,
+    background = DarkBackground,
+    onBackground = TextOnDark,
+    surface = PanelBackground,
+    onSurface = TextOnLight,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val LightColorScheme = lightColorScheme(
+    primary = CardYellow,
+    onPrimary = TextOnYellow,
+    primaryContainer = CardYellow,          // metric cards etc.
+    onPrimaryContainer = TextOnYellow,
+    secondary = PillYellow,
+    onSecondary = TextOnYellow,
+    secondaryContainer = PillYellow,        // settings rows + segmented background
+    onSecondaryContainer = TextOnYellow,
+    background = CreamBackground,           // whole screen
+    onBackground = TextOnBg,
+    surface = CreamBackground,
+    onSurface = TextOnBg,
+    outline = OutlineYellow,
 )
 
 @Composable
 fun LiveLifeBreatheAirTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = false,            // lock to light for now
+    dynamicColor: Boolean = false,         // IMPORTANT: don’t use system dynamic colors
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = DarkColorScheme
+        // if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
