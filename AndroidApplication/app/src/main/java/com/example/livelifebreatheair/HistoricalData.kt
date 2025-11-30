@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,8 +30,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.livelifebreatheair.ui.components.AirPollenTab
 import com.example.livelifebreatheair.ui.theme.LiveLifeBreatheAirTheme
 
@@ -50,9 +55,17 @@ class HistoricalData: ComponentActivity() {
 fun HistoricalDataScreen() {
     val cs = MaterialTheme.colorScheme
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = cs.background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        cs.surface,
+                        cs.background,
+                    )
+                )
+            ),
     ) {
         Column(
             modifier = Modifier
@@ -76,7 +89,7 @@ fun HistoricalDataScreen() {
                 // round "menu" button on the right
                 Surface(
                     shape = CircleShape,
-                    color = cs.secondaryContainer,
+                    color = cs.primaryContainer,
                     tonalElevation = 2.dp,
                     onClick = { /* TODO later */ },
                     modifier = Modifier.size(36.dp)
@@ -102,30 +115,52 @@ fun HistoricalDataScreen() {
             ChartCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
+                    .height(220.dp),
             ) {
                 // placeholder bar chart
                 Row(
                     Modifier
                         .fillMaxSize()
                         .padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.Bottom,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val heights = listOf(80, 130, 160, 140, 150, 120, 90)
-                    heights.forEach { h ->
-                        Box(
-                            Modifier
-                                .width(16.dp)
-                                .height(h.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(cs.outlineVariant)
-                        )
+                ){
+                   Column(
+                       modifier = Modifier.fillMaxHeight(),
+                       verticalArrangement = Arrangement.SpaceBetween
+                   ) {
+                       val steps = listOf(16, 14, 12, 10, 8, 6, 4, 2, 0)
+                       steps.forEach {
+                           Text(
+                               text = it.toString(),
+                               fontSize = 12.sp,
+                               color = Color.Gray
+                           )
+                        }
                     }
+                   Row(
+                       Modifier
+                           .fillMaxHeight()
+                           .weight(1f),
+                       verticalAlignment = Alignment.Bottom,
+                       horizontalArrangement = Arrangement.SpaceBetween
+                   )
+                   {
+                       val heights = listOf(80, 130, 160, 140, 150, 120, 90)
+                       heights.forEach { h ->
+                           Box(
+                               Modifier
+                                   .width(16.dp)
+                                   .height(h.dp)
+                                   .clip(RoundedCornerShape(4.dp))
+                                   .background(cs.primaryContainer)
+                           )
+                       }
+                   }
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(36.dp))
 
             // Second chart
             Text(
@@ -174,8 +209,8 @@ fun ChartCard(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        tonalElevation = 4.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

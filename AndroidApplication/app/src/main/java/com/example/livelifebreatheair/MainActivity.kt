@@ -23,10 +23,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.example.livelifebreatheair.ui.components.AirPollenTab
 import com.example.livelifebreatheair.ui.components.MetricsGrid
+import com.example.livelifebreatheair.ui.components.NavigationTab
 import com.example.livelifebreatheair.ui.components.SettingsRow
 import com.example.livelifebreatheair.ui.theme.LiveLifeBreatheAirTheme
 
@@ -37,19 +42,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LiveLifeBreatheAirTheme {
-                MainScreen()
+                HistoricalDataScreen()
                 }
             }
         }
 }
 
+
 @Composable
 private fun MainScreen() {
     val cs = MaterialTheme.colorScheme
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = cs.background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        cs.background,
+                        cs.surface,
+                    )
+                )
+            ),
+        //color = cs.background
     ) {
         Column(
             modifier = Modifier

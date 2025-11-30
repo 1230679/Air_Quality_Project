@@ -31,7 +31,7 @@ fun MetricCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = MaterialTheme.colorScheme.secondaryContainer,
         shape = RoundedCornerShape(18.dp),
         modifier = modifier.height(140.dp)
     ) {
@@ -78,7 +78,7 @@ fun EmptyTile(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = MaterialTheme.colorScheme.secondaryContainer,
         shape = RoundedCornerShape(18.dp),
         modifier = modifier.height(140.dp)
     ) { /* intentionally blank */ }
