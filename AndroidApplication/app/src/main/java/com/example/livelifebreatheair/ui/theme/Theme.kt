@@ -16,6 +16,8 @@ private val AirQualityScheme = lightColorScheme(
     onPrimaryContainer = Black,
     secondaryContainer = White30,
     onSecondaryContainer = Black,
+    tertiaryContainer = Black,
+    onTertiaryContainer = White,
 
 )
 
