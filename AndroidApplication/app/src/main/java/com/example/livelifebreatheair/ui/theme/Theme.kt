@@ -12,12 +12,14 @@ private val AirQualityScheme = lightColorScheme(
     background = GradientBlueEnd,
     onBackground = White,
     surface = GradientBlueStart,
+    surfaceContainer = BarBlue,
     primaryContainer = White,
     onPrimaryContainer = Black,
     secondaryContainer = White30,
     onSecondaryContainer = Black,
     tertiaryContainer = Black,
     onTertiaryContainer = White,
+
 
 )
 

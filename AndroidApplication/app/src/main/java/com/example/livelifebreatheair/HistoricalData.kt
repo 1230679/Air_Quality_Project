@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -68,7 +69,7 @@ fun HistoricalDataScreen() {
     //state for selected filter
     var selectedCategories by remember {mutableStateOf(setOf(DataCategory.ALL))}
 
-    // mockData
+    // Data -> mockData -> change at some point
     val allCharts = MockData.historicalCharts
 
     //filter chart on selected categories
@@ -102,6 +103,7 @@ fun HistoricalDataScreen() {
         }
     }
 
+    //Background
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -167,7 +169,7 @@ fun HistoricalDataScreen() {
             // dynamic filtered Charts
             filteredCharts.forEach { chartData ->
                 Text(
-                    text = chartData.title,
+                    text = "${chartData.title} (${chartData.unit})",
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(Modifier.height(12.dp))
@@ -176,109 +178,11 @@ fun HistoricalDataScreen() {
                     data = chartData,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
+                        .height(260.dp)
                 )
 
                 Spacer(Modifier.height(24.dp))
             }
-
-            // push the tab to the bottom
-            Spacer(Modifier.height(60.dp))
-
-
-
-            /*// ---------- First chart ----------
-            Text(
-                text = "PM2.5",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(Modifier.height(12.dp))
-
-            ChartCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-            ) {
-                // placeholder bar chart
-                Row(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ){
-                   Column(
-                       modifier = Modifier.fillMaxHeight(),
-                       verticalArrangement = Arrangement.SpaceBetween
-                   ) {
-                       val steps = listOf(16, 14, 12, 10, 8, 6, 4, 2, 0)
-                       steps.forEach {
-                           Text(
-                               text = it.toString(),
-                               fontSize = 12.sp,
-                               color = Color.Gray
-                           )
-                        }
-                    }
-                   Row(
-                       Modifier
-                           .fillMaxHeight()
-                           .weight(1f),
-                       verticalAlignment = Alignment.Bottom,
-                       horizontalArrangement = Arrangement.SpaceBetween
-                   )
-                   {
-                       val heights = listOf(80, 130, 160, 140, 150, 120, 90)
-                       heights.forEach { h ->
-                           Box(
-                               Modifier
-                                   .width(16.dp)
-                                   .height(h.dp)
-                                   .clip(RoundedCornerShape(4.dp))
-                                   .background(cs.primaryContainer)
-                           )
-                       }
-                   }
-                }
-            }
-
-            Spacer(Modifier.height(36.dp))
-
-            // Second chart
-            Text(
-                text = "Air quality index",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(Modifier.height(8.dp))
-
-            ChartCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-            ) {
-                // very simple blue area placeholder
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.BottomStart
-                ) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(80.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(cs.primary.copy(alpha = 0.5f))
-                    )
-                }
-            }*/
-
-            // push the tab to the bottom
-            Spacer(Modifier.weight(1f))
-
-            //AirPollenTab()
-
-            //Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -290,6 +194,9 @@ fun BarChart(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
+    //state selected bar
+    var selectedValue by remember { mutableStateOf<Int?>(null) }
+
 
     ChartCard(
         modifier = modifier
@@ -310,59 +217,45 @@ fun BarChart(
         }
 
         // konverts datavalues to pixel-height
-        val maxHeight = 180.dp
+        val maxHeight = 200.dp
         val heights = dataValues.map { value ->
             (value.toFloat() / maxValue * maxHeight.value).dp
         }
 
-        Row(
+
+        Column(
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.Top,
+                .padding(horizontal = 16.dp)
         ) {
-            // Y-axis labels
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(32.dp),
-                verticalArrangement = Arrangement.SpaceEvenly
+            Row(
+                Modifier.weight(1f),
+                verticalAlignment = Alignment.Top,
             ) {
-                /*// unit at the top
-                Text(
-                    text = data.unit,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = cs.onSecondaryContainer
-                )*/
-
-                // Labels, reversed to start from bottom
+                // Y-axis labels
                 Column(
-                    modifier = Modifier.fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(32.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.End
                 ) {
                     yAxisLabels.reversed().forEach { label ->
                         Text(
                             text = label.toString(),
                             fontSize = 12.sp,
-                            color = Color.Gray //CHANGE
+                            color = Color.Gray
                         )
                     }
                 }
-            }
 
-            // Bar chart
-            Column(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
-                // Bar Area
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Bar chart area
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .fillMaxHeight(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Row(
@@ -370,33 +263,81 @@ fun BarChart(
                         verticalAlignment = Alignment.Bottom,
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        heights.forEach { h ->
-                            Box(
-                                Modifier
-                                    .width(24.dp)
-                                    .height(h)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(cs.primaryContainer)
-                            )
+                        heights.forEachIndexed { index, h ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+
+                                // if bar is selected -> show value
+                                if (selectedValue == data.values[index]) {
+                                    Text(
+                                        text = data.values[index].toString(),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                }
+
+                                // clickable bars
+                                Box(
+                                    Modifier
+                                        .width(24.dp)
+                                        .height(h)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(cs.surfaceContainer)
+                                        .clickable {
+                                            selectedValue = if (selectedValue == data.values[index]) null else data.values[index]
+                                        }
+                                )
+                            }
                         }
                     }
                 }
             }
-            /*// X-axis
+
+            // X-axis line
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                data.labels.forEach { label ->
-                    Text(
-                        text = label,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                // Empty space for y-axis
+                Spacer(modifier = Modifier.width(32.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Horizontal line
+                /*Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(1.dp)
+                        .background(Color.Gray.copy(alpha = 0.3f))
+                )*/
+            }
+
+            // X-axis labels
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Empty space for y-axis
+                Spacer(modifier = Modifier.width(40.dp))
+
+                // Labels
+                Row(
+                    Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    data.labels.forEach { label ->
+                        Text(
+                            text = label,
+                            fontSize = 10.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.width(24.dp)
+                        )
+                    }
                 }
-            }*/
+            }
         }
     }
 }
@@ -415,7 +356,7 @@ fun ChartCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(12.dp),
             content = content
         )
     }
