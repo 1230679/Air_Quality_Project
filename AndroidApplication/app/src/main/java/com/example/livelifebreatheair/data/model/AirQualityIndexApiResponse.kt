@@ -2,7 +2,7 @@ package com.example.livelifebreatheair.data.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AirQualityData(
+data class AirQualityIndexApiResponse(
     val airQuality: List<HourInfo>
 ) {
     @Serializable
