@@ -1,8 +1,11 @@
+import logging
 from .config import API_KEY
 from .models import PollenData
 import requests
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
+
+logger = logging.getLogger('data_fetching.pollen')
 
 class Pollen:
     def __init__(self):
@@ -10,6 +13,7 @@ class Pollen:
 
     def fill_db(self, location, response):
         # Accept either a Location model instance or a primary key
+        logger.info("fill_db called for pollen; location=%s", getattr(location, 'id', location))
         from .models import Location as LocationModel
         if hasattr(location, 'id'):
             location_obj = location
@@ -17,7 +21,7 @@ class Pollen:
             try:
                 location_obj = LocationModel.objects.get(pk=location)
             except Exception:
-                print(f"Invalid location provided to fill_db: {location}")
+                logger.exception("Invalid location provided to fill_db: %s", location)
                 return
 
         # Support responses that either have a top-level 'pollen' key
@@ -87,12 +91,12 @@ class Pollen:
                 try:
                     PollenData.objects.update_or_create(defaults=defaults, **lookup)
                 except Exception as e:
-                    print(f"Failed saving pollen record ({display_name} @ {dt}): {e}")
+                    logger.exception("Failed saving pollen record (%s @ %s): %s", display_name, dt, e)
 
         try:
-            print(f"COUNT OF POLLEN DATA: {PollenData.objects.count()}")
+            logger.info("COUNT OF POLLEN DATA: %s", PollenData.objects.count())
         except Exception:
-            pass
+            logger.exception("Failed to count pollen data")
 
 
 
@@ -123,7 +127,7 @@ class Pollen:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching pollen forecast data: {e}")
+            logger.exception("Error fetching pollen forecast data: %s", e)
             return None
     
     def filter_pollen_data(self, pollen_data):

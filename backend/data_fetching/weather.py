@@ -1,8 +1,11 @@
 import os 
 import requests
+import logging
 from .models import WeatherData
 from django.utils.dateparse import parse_datetime
 from .config import API_KEY
+
+logger = logging.getLogger('data_fetching.weather')
 
 class Weather:
     def __init__(self):
@@ -60,7 +63,8 @@ class Weather:
             wind_speed = hour_data.get("wind", {}).get("speed", {}).get("value")
             uv_index = hour_data.get("uvIndex")
 
-            WeatherData.objects.update_or_create(
+            try:
+                WeatherData.objects.update_or_create(
                 location_id=location,
                 timestamp=end_time,
                 temperature = float(temperature) if temperature is not None else None,
@@ -68,9 +72,14 @@ class Weather:
                 humidity = float(humidity) if humidity is not None else None,
                 wind_speed = float(wind_speed) if wind_speed is not None else None,
                 uv_index = int(uv_index) if uv_index is not None else None,
-            )
+                )
+            except Exception:
+                logger.exception("Failed saving WeatherData for %s: %s", end_time, hour_data)
 
-        print(f"COUNT OF WEATHER DATA: {WeatherData.objects.count()}")
+        try:
+            logger.info("COUNT OF WEATHER DATA: %s", WeatherData.objects.count())
+        except Exception:
+            logger.exception("Failed to count WeatherData")
 
     def fetch_weather_data(self, location):
         """
@@ -97,5 +106,5 @@ class Weather:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching weather data: {e}")
+            logger.exception("Error fetching weather data: %s", e)
             return None

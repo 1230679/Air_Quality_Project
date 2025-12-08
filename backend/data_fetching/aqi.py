@@ -1,9 +1,12 @@
 import time
 import requests
 import os
+import logging
 from .models import AirQualityData
 from django.utils.dateparse import parse_datetime
 from .config import API_KEY
+
+logger = logging.getLogger('data_fetching.aqi')
 
 class AirQualityIndex:
     def __init__(self):
@@ -26,14 +29,15 @@ class AirQualityIndex:
         """
         # change response from json to dict
         hours_info = response.get("hoursInfo", [])
-        print(f"Received {len(hours_info)} hourly entries.")
+        logger.info("fill_db called for aqi; location=%s; received %d hourly entries", getattr(location, 'id', location), len(hours_info))
 
         for hour_data in hours_info:
-            print("Processing hour data:", hour_data)
-            timestamp = parse_datetime(hour_data["dateTime"])
-
-            print("Parsed timestamp:", timestamp)
-
+            logger.debug("Processing hour data: %s", hour_data)
+            try:
+                timestamp = parse_datetime(hour_data["dateTime"])
+            except Exception:
+                logger.exception("Failed parsing dateTime from hour_data: %s", hour_data)
+                continue
             indexes = hour_data.get("indexes", [])
             uaqi_entry = next((i for i in indexes if i.get("code") == "uaqi"), None)
 
@@ -48,20 +52,25 @@ class AirQualityIndex:
             o3 = pollutants.get("o3", {}).get("concentration", {}).get("value")
             no2 = pollutants.get("no2", {}).get("concentration", {}).get("value")
 
-            AirQualityData.objects.update_or_create(
-                location_id=location,
-                timestamp=timestamp,
-                defaults={
-                    "aqi": int(aqi),
-                    "dominant_pollutant": dominant_pollutant or "",
-                    "pm25_concentration": float(pm25),
-                    "pm10_concentration": float(pm10),
-                    "o3_concentration": float(o3),
-                    "no2_concentration": float(no2),
-                },
-            )
-
-        print(AirQualityData.objects.count())
+            try:
+                AirQualityData.objects.update_or_create(
+                    location_id=location,
+                    timestamp=timestamp,
+                    defaults={
+                        "aqi": int(aqi) if aqi is not None else None,
+                        "dominant_pollutant": dominant_pollutant or "",
+                        "pm25_concentration": float(pm25) if pm25 is not None else None,
+                        "pm10_concentration": float(pm10) if pm10 is not None else None,
+                        "o3_concentration": float(o3) if o3 is not None else None,
+                        "no2_concentration": float(no2) if no2 is not None else None,
+                    },
+                )
+            except Exception:
+                logger.exception("Failed saving AirQualityData for timestamp %s", timestamp)
+        try:
+            logger.info("AirQualityData count: %s", AirQualityData.objects.count())
+        except Exception:
+            logger.exception("Failed to count AirQualityData")
 
         
 
@@ -97,7 +106,7 @@ class AirQualityIndex:
             return response.json()
         
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching AQI data: {e}")
+            logger.exception("Error fetching AQI data: %s", e)
             return None
 
     def validate_pageSize(self, pageSize):
