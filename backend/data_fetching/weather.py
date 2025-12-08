@@ -13,6 +13,7 @@ class Weather:
 
     def fill_db(self, location, response):
         history_hours = response.get("historyHours", [])
+        logger.info("fill_db called for weather; location=%s; history_hours=%d", getattr(location, 'id', location), len(history_hours))
 
         for hour_data in history_hours:
             interval = hour_data.get("interval")
@@ -101,10 +102,19 @@ class Weather:
             "location.longitude": location["longitude"]
         }
 
+        logger.info("Fetching weather data from %s for location=%s", url, location)
+
         try:
             response = requests.get(url, params=params)
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            try:
+                # log number of history hours if present
+                history_count = len(data.get("historyHours", [])) if isinstance(data, dict) else None
+                logger.info("Fetched weather data; history_hours=%s", history_count)
+            except Exception:
+                logger.debug("Fetched weather data keys: %s", list(data.keys()) if isinstance(data, dict) else type(data))
+            return data
         except requests.exceptions.RequestException as e:
             logger.exception("Error fetching weather data: %s", e)
             return None

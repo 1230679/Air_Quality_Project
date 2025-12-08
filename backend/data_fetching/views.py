@@ -10,7 +10,7 @@ from rest_framework.renderers import JSONRenderer
 from pprint import pprint
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from .tasks import fetch_air_quality_data, process_air_quality_data, test_celery_task
+from .tasks import fetch_air_quality_data, process_air_quality_data, test_celery_task, fetch_weather_data, process_weather_data
 from celery.result import AsyncResult
 from celery import chain
 
@@ -117,6 +117,24 @@ def trigger_air_quality_fetch(request):
     })
 
 
+@require_http_methods(["GET"])
+def trigger_weather_fetch(request):
+    """
+    Trigger the celery workflow to fetch and process weather data
+    """
+    workflow = chain(
+        fetch_weather_data.s(),
+        process_weather_data.s()
+    )
+    result = workflow.apply_async()
+
+    return JsonResponse({
+        "message": "Weather fetch enqueued",
+        "task_id": result.id,
+        "status_url": f"/data-fetching/task-status/{result.id}/"
+    })
+
+
 
 @require_http_methods(["GET"])
 def test_celery(request):
@@ -131,6 +149,7 @@ def test_celery(request):
         'status': 'Task is running...',
         'check_status_at': f'http://localhost:8000/data-fetching/task-status/{task.id}/'
     })
+
 
 @require_http_methods(["GET"])
 def task_status(request, task_id):
