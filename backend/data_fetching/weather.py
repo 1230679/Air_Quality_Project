@@ -6,14 +6,54 @@ from .config import API_KEY
 
 class Weather:
     def __init__(self):
-        self.baseUrl = "https://weather.googleapis.com/v1/"
+        self.baseUrl = "https://weather.googleapis.com/v1"
 
     def fill_db(self, location, response):
         history_hours = response.get("historyHours", [])
 
         for hour_data in history_hours:
             interval = hour_data.get("interval")
-            end_time = parse_datetime(hour_data.get("endTime")) # Only retrieve end_time and use only end_time as timestamp to avoid conflicts
+            # `endTime` can appear in several shapes depending on API version: string, numeric (seconds/ms),
+            # or nested inside a dict. Make parsing resilient and skip if we can't obtain a valid timestamp.
+            raw_end = None
+            if isinstance(interval, dict):
+                raw_end = interval.get("endTime")
+            else:
+                raw_end = hour_data.get("endTime")
+
+            end_time = None
+            try:
+                if raw_end is None:
+                    end_time = None
+                elif isinstance(raw_end, str):
+                    end_time = parse_datetime(raw_end)
+                elif isinstance(raw_end, (int, float)):
+                    ts = float(raw_end)
+                    if ts > 1e12:
+                        ts = ts / 1000.0
+                    from datetime import datetime, timezone
+                    end_time = datetime.fromtimestamp(ts, tz=timezone.utc)
+                elif isinstance(raw_end, dict):
+                    if raw_end.get("dateTime"):
+                        end_time = parse_datetime(raw_end.get("dateTime"))
+                    elif raw_end.get("value") and isinstance(raw_end.get("value"), str):
+                        end_time = parse_datetime(raw_end.get("value"))
+                    elif raw_end.get("seconds") is not None:
+                        s = raw_end.get("seconds")
+                        s = float(s)
+                        if s > 1e12:
+                            s = s / 1000.0
+                        from datetime import datetime, timezone
+                        end_time = datetime.fromtimestamp(s, tz=timezone.utc)
+                    else:
+                        end_time = parse_datetime(str(raw_end))
+            except Exception:
+                end_time = None
+
+            if end_time is None:
+                # Skip records without a valid timestamp to avoid DB integrity issues
+                continue
+
             temperature = hour_data.get("temperature", {}).get("degrees")
             apparent_temperature = hour_data.get("feelsLikeTemperature", {}).get("degrees")
             humidity = hour_data.get("humidity")
@@ -32,7 +72,7 @@ class Weather:
 
         print(f"COUNT OF WEATHER DATA: {WeatherData.objects.count()}")
 
-    def fetch_weather_data(self, location, hours, pageSize=5):
+    def fetch_weather_data(self, location):
         """
         Fetch hourly historical weather data from Google Weather API.
         
@@ -44,14 +84,12 @@ class Weather:
             dict: Parsed JSON response containing historical weather data.
         """
         
-        url = f"{self.baseUrl}/history:lookup?key={API_KEY}"
+        url = f"{self.baseUrl}/history/hours:lookup?key={API_KEY}"
 
         params = {
             "key": API_KEY,
             "location.latitude": location["latitude"],
-            "location.longitude": location["longitude"],
-            "hours": hours,
-            "pageSize": pageSize
+            "location.longitude": location["longitude"]
         }
 
         try:

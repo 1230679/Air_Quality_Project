@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from pprint import pprint
-from .fetchers import fetch_pollen_data, fetch_air_quality_data, fetch_weather_data
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .tasks import fetch_air_quality_data, process_air_quality_data, test_celery_task
@@ -92,8 +91,7 @@ class FetchWeatherData(APIView):
         location_obj = self.location_helper.fill_db(location=f"{self.latitude},{self.longitude}", city="Aarhus", country="Denmark")
 
         weather_data = self.weather.fetch_weather_data(
-            location={"latitude": self.latitude, "longitude": self.longitude},
-            hours=2
+            location={"latitude": self.latitude, "longitude": self.longitude}
         )
         if weather_data:
             pprint(weather_data)
