@@ -20,8 +20,8 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'fetch-air-quality-every-4-hours': {
         'task': 'data_fetching.tasks.fetch_air_quality_data',
-        # 'schedule': crontab(minute=0, hour='*/4'),  # Every 4 hours at minute 0
-        'schedule': crontab(minute='*/2'),  # Every 2 minutes for testing
+        'schedule': crontab(minute=0, hour='*/2'),  # Every 2 hours at minute 0
+        # 'schedule': crontab(minute='*/2'),  # Every 2 minutes for testing
     },
 }
 
