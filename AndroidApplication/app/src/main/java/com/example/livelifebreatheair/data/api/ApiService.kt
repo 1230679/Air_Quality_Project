@@ -1,7 +1,8 @@
 package com.example.livelifebreatheair.data.api
+
 import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
 import com.example.livelifebreatheair.data.model.PollenData
-import com.example.livelifebreatheair.data.model.WeatherData
+import com.example.livelifebreatheair.data.model.WeatherApiResponse
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -10,23 +11,24 @@ import kotlinx.serialization.json.Json
 interface IApiService {
     suspend fun getAirQualityData(): Result<AirQualityIndexApiResponse>
     suspend fun getPollenData(): Result<PollenData>
-    suspend fun getWeatherData(): Result<WeatherData>
+    suspend fun getWeatherData(): Result<WeatherApiResponse>
 }
 
 class ApiService : IApiService {
     private val client = ApiClient.client
     private val baseUrl = "http://10.0.2.2:8000/api"
+    private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun getAirQualityData(): Result<AirQualityIndexApiResponse> {
         return try {
-            val response = client.get("${baseUrl}/aqi_data") {
+            val response = client.get("${baseUrl}/aiq_data") {
                 contentType(ContentType.Application.Json)
             }
-            val aiq = response.body<String>()
             if (response.status != HttpStatusCode.OK) {
                 return Result.failure(Exception("Failed to get air quality data: ${response.status}"))
             }
-            Result.success(Json.decodeFromString<AirQualityIndexApiResponse>(aiq ))
+            val aiq = response.body<String>()
+            Result.success(json.decodeFromString<AirQualityIndexApiResponse>(aiq))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -37,26 +39,26 @@ class ApiService : IApiService {
             val response = client.get("${baseUrl}/pollen_data") {
                 contentType(ContentType.Application.Json)
             }
-            val metadata = response.body<String>()
             if (response.status != HttpStatusCode.OK) {
-                return Result.failure(Exception("Failed to get group metadata: ${response.status}"))
+                return Result.failure(Exception("Failed to get pollen data: ${response.status}"))
             }
-            Result.success(Json.decodeFromString<PollenData>(metadata))
+            val metadata = response.body<String>()
+            Result.success(json.decodeFromString<PollenData>(metadata))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override suspend fun getWeatherData(): Result<WeatherData> {
+    override suspend fun getWeatherData(): Result<WeatherApiResponse> {
         return try {
             val response = client.get("${baseUrl}/weather_data") {
                 contentType(ContentType.Application.Json)
             }
-            val metadata = response.body<String>()
             if (response.status != HttpStatusCode.OK) {
                 return Result.failure(Exception("Failed to get weather data: ${response.status}"))
             }
-            Result.success(Json.decodeFromString<WeatherData>(metadata))
+            val metadata = response.body<String>()
+            Result.success(json.decodeFromString<WeatherApiResponse>(metadata))
         } catch (e: Exception) {
             Result.failure(e)
         }

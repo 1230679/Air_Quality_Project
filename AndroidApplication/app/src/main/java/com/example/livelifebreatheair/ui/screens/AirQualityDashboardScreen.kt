@@ -18,6 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,16 +31,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.livelifebreatheair.sampleData.MockData
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
+import com.example.livelifebreatheair.ui.components.LoadingView
 import com.example.livelifebreatheair.ui.models.AirQualityScreenData
+import com.example.livelifebreatheair.viewModel.HistoricalDataViewModel
+import com.example.livelifebreatheair.viewModel.HistoricalDataViewModelFactory
 
 
 @Composable
 fun AirQualityDashboardScreen(
     onProfileClick: () -> Unit = {},
-    data: AirQualityScreenData = MockData.airQualityScreen,
     hiddenMetrics: Set<String> = emptySet()
 ) {
+    val viewModel: HistoricalDataViewModel = viewModel(factory = HistoricalDataViewModelFactory())
+    LaunchedEffect(Unit) {
+        viewModel.loadAirQuality()
+    }
+    val data by viewModel.airQuality.collectAsState()
+
+    if(data == null) {
+        LoadingView()
+        return
+    }
+
+    val nonNullData: Result<AirQualityIndexApiResponse> = data!!
+    val dataValue: AirQualityIndexApiResponse? = nonNullData.getOrNull()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -58,14 +78,14 @@ fun AirQualityDashboardScreen(
         ) {
             Header(onProfileClick = onProfileClick)
 
-            MainStatusCard(data)
+            MainStatusCard(dataValue!!)
 
             PollutantsGrid(
-                data = data,
+                data = dataValue,
                 hiddenMetrics = hiddenMetrics
             )
 
-            ForecastRow(data)
+            //ForecastRow(data)
         }
     }
 }
@@ -104,7 +124,7 @@ private fun Header(
 
 @Composable
 private fun MainStatusCard(
-    data: AirQualityScreenData
+    data: AirQualityIndexApiResponse
 ) {
     Surface(
         modifier = Modifier
@@ -144,14 +164,14 @@ private fun MainStatusCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = data.overallCategory,
+                        text = data.airQuality.hoursInfo[0].indexes[0].category,
                         fontSize = 26.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF1C2433)
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = data.index,
+                        text = data.airQuality.hoursInfo[0].indexes[0].aqiDisplay,
                         fontSize = 14.sp,
                         color = Color(0xFF4C5C6E)
                     )
@@ -161,7 +181,7 @@ private fun MainStatusCard(
             Spacer(Modifier.height(12.dp))
 
             Text(
-                text = data.description,
+                text = data.airQuality.hoursInfo[0].indexes[0].dominantPollutant,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color(0xFF4C5C6E)
                 ),
@@ -173,7 +193,7 @@ private fun MainStatusCard(
 
 @Composable
 private fun PollutantsGrid(
-    data: AirQualityScreenData,
+    data: AirQualityIndexApiResponse,
     hiddenMetrics: Set<String>
 ) {
     Column(
@@ -183,22 +203,22 @@ private fun PollutantsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val co = data.pollutantCards[0]
-            if (co.name !in hiddenMetrics) {
+            val co = data.airQuality.hoursInfo[0].pollutants[0]
+            if (co.fullName !in hiddenMetrics) {
                 PollutantCard(
-                    label = co.name,
-                    value = co.value,
+                    label = co.fullName,
+                    value = co.concentration.value.toString(),
                     modifier = Modifier.weight(1f)
                 )
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            val o3 = data.pollutantCards[1]
-            if (o3.name !in hiddenMetrics) {
+            val o3 = data.airQuality.hoursInfo[0].pollutants[1]
+            if (o3.fullName !in hiddenMetrics) {
                 PollutantCard(
-                    label = o3.name,
-                    value = o3.value,
+                    label = o3.fullName,
+                    value = o3.concentration.value.toString(),
                     modifier = Modifier.weight(1f)
                 )
             } else {
@@ -210,22 +230,22 @@ private fun PollutantsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val pm25 = data.pollutantCards[2]
-            if (pm25.name !in hiddenMetrics) {
+            val pm25 = data.airQuality.hoursInfo[0].pollutants[2]
+            if (pm25.fullName !in hiddenMetrics) {
                 PollutantCard(
-                    label = pm25.name,
-                    value = pm25.value,
+                    label = pm25.fullName,
+                    value = pm25.concentration.value.toString(),
                     modifier = Modifier.weight(1f)
                 )
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            val pm10 = data.pollutantCards[3]
-            if (pm10.name !in hiddenMetrics) {
+            val pm10 = data.airQuality.hoursInfo[0].pollutants[3]
+            if (pm10.fullName !in hiddenMetrics) {
                 PollutantCard(
-                    label = pm10.name,
-                    value = pm10.value,
+                    label = pm10.fullName,
+                    value = pm10.concentration.value.toString(),
                     modifier = Modifier.weight(1f)
                 )
             } else {
