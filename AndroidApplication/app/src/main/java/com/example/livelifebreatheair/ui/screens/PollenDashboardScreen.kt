@@ -31,10 +31,12 @@ import androidx.compose.ui.unit.sp
 import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.models.PollenScreenData
 
+
 @Composable
 fun PollenDashboardScreen(
     onProfileClick: () -> Unit = {},
-    data: PollenScreenData = MockData.pollenScreen
+    data: PollenScreenData = MockData.pollenScreen,
+    hiddenTypes: Set<String> = emptySet()
 ) {
     Box(
         modifier = Modifier
@@ -58,7 +60,10 @@ fun PollenDashboardScreen(
 
             PollenMainCard(data)
 
-            PollenTypesGrid(data)
+            PollenTypesGrid(
+                data = data,
+                hiddenTypes = hiddenTypes
+            )
 
             PollenForecastRow(data)
         }
@@ -168,7 +173,8 @@ private fun PollenMainCard(
 
 @Composable
 private fun PollenTypesGrid(
-    data: PollenScreenData
+    data: PollenScreenData,
+    hiddenTypes: Set<String>
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -177,38 +183,63 @@ private fun PollenTypesGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PollenTypeCard(
-                label = data.typeCards[0].name,
-                value = data.typeCards[0].value,
-                borderColor = Color(0xFFFF5555),
-                modifier = Modifier.weight(1f)
-            )
-            PollenTypeCard(
-                label = data.typeCards[1].name,
-                value = data.typeCards[1].value,
-                borderColor = Color(0xFF55C94A),
-                modifier = Modifier.weight(1f)
-            )
+            val oak = data.typeCards[0]
+            if (oak.name !in hiddenTypes) {
+                PollenTypeCard(
+                    label = oak.name,
+                    value = oak.value,
+                    borderColor = Color(0xFFFF5555),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            val weeds = data.typeCards[1]
+            if (weeds.name !in hiddenTypes) {
+                PollenTypeCard(
+                    label = weeds.name,
+                    value = weeds.value,
+                    borderColor = Color(0xFF55C94A),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PollenTypeCard(
-                label = data.typeCards[2].name,
-                value = data.typeCards[2].value,
-                borderColor = Color(0xFF55C94A),
-                modifier = Modifier.weight(1f)
-            )
-            PollenTypeCard(
-                label = data.typeCards[3].name,
-                value = data.typeCards[3].value,
-                borderColor = Color(0xFF55C94A),
-                modifier = Modifier.weight(1f)
-            )
+            val trees = data.typeCards[2]
+            if (trees.name !in hiddenTypes) {
+                PollenTypeCard(
+                    label = trees.name,
+                    value = trees.value,
+                    borderColor = Color(0xFFFDD835),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            val grass = data.typeCards[3]
+            if (grass.name !in hiddenTypes) {
+                PollenTypeCard(
+                    label = grass.name,
+                    value = grass.value,
+                    borderColor = Color(0xFF55C94A),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
     }
 }
+
+
 
 @Composable
 private fun PollenTypeCard(
@@ -217,6 +248,7 @@ private fun PollenTypeCard(
     borderColor: Color,
     modifier: Modifier = Modifier
 ) {
+
     Surface(
         modifier = modifier
             .height(120.dp)

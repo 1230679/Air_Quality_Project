@@ -2,14 +2,26 @@ package com.example.livelifebreatheair.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
@@ -20,6 +32,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +54,11 @@ enum class AdjustmentTab { AIR, POLLEN }
 
 @Composable
 fun ProfileScreen(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    hiddenAirMetrics: Set<String>,
+    hiddenPollenTypes: Set<String>,
+    onToggleAirMetric: (String) -> Unit,
+    onTogglePollenType: (String) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(AdjustmentTab.AIR) }
 
@@ -78,7 +95,7 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Profil",
+                        text = "Profile",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color(0xFF404040)
                     )
@@ -139,8 +156,14 @@ fun ProfileScreen(
 
                 // Content
                 when (selectedTab) {
-                    AdjustmentTab.AIR -> AirAdjustments()
-                    AdjustmentTab.POLLEN -> PollenAdjustments()
+                    AdjustmentTab.AIR -> AirAdjustments(
+                        hiddenAirMetrics = hiddenAirMetrics,
+                        onToggleAirMetric = onToggleAirMetric
+                    )
+                    AdjustmentTab.POLLEN -> PollenAdjustments(
+                        hiddenPollenMetrics = hiddenPollenTypes,
+                        onTogglePollenType = onTogglePollenType
+                    )
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -154,7 +177,7 @@ fun ProfileScreen(
 @Composable
 private fun ProfileMenuItem(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.ArrowForward
+    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.AutoMirrored.Filled.ArrowForward
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -257,7 +280,10 @@ private fun SegmentButton(
 /* ---------- Air layout ---------- */
 
 @Composable
-private fun AirAdjustments() {
+private fun AirAdjustments(
+    hiddenAirMetrics: Set<String>,
+    onToggleAirMetric: (String) -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -269,12 +295,16 @@ private fun AirAdjustments() {
                 value = "10",
                 unit = "mg/m³",
                 label = "Carbon Monoxide",
+                isEnabled = "Carbon Monoxide" !in hiddenAirMetrics,
+                onPlusClick = { onToggleAirMetric("Carbon Monoxide") },
                 modifier = Modifier.weight(1f)
             )
             AirCard(
                 value = "100",
                 unit = "µg/m³",
                 label = "O₃",
+                isEnabled = "O₃" !in hiddenAirMetrics,
+                onPlusClick = { onToggleAirMetric("O₃") },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -286,30 +316,44 @@ private fun AirAdjustments() {
                 value = "12",
                 unit = "µg/m³",
                 label = "PM2.5",
+                isEnabled = "PM2.5" !in hiddenAirMetrics,
+                onPlusClick = { onToggleAirMetric("PM2.5") },
                 modifier = Modifier.weight(1f)
             )
             AirCard(
                 value = "8",
                 unit = "µg/m³",
                 label = "PM10",
+                isEnabled = "PM10" !in hiddenAirMetrics,
+                onPlusClick = { onToggleAirMetric("PM10") },
                 modifier = Modifier.weight(1f)
             )
         }
     }
 }
 
+
 @Composable
 private fun AirCard(
     value: String,
     unit: String,
     label: String,
+    isEnabled: Boolean,
+    onPlusClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val textColor = if (isEnabled) Color(0xFF404040) else Color(0xFFB0B0B0)
+    val valueColor = if (isEnabled) Color(0xFF404040) else Color(0xFFB0B0B0)
+
     Card(
         modifier = modifier.height(110.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.9f)
+            containerColor = if (isEnabled) {
+                Color.White.copy(alpha = 0.9f)
+            } else {
+                Color(0xFFE0E0E0)
+            }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -318,37 +362,25 @@ private fun AirCard(
                 .fillMaxSize()
                 .padding(14.dp)
         ) {
-            // +/- knoppen
             Row(
-                modifier = Modifier.align(Alignment.TopCenter),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.align(Alignment.TopStart),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(
-                    onClick = { /* TODO: value-- */ },
+                    onClick = onPlusClick,
                     modifier = Modifier
+                        .align(Alignment.Top)
                         .size(24.dp)
                         .clip(CircleShape)
                         .background(Color.White)
                 ) {
+                    val toggleIcon = if (isEnabled) Icons.Default.Remove else Icons.Default.Add
+                    val toggleDescription = if (isEnabled) "Hide metric" else "Show metric"
+
                     Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = "Decrease",
-                        tint = Color(0xFF808080)
-                    )
-                }
-                Spacer(Modifier.width(40.dp))
-                IconButton(
-                    onClick = { /* TODO: value++ */ },
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Increase",
-                        tint = Color(0xFF808080)
+                        imageVector = toggleIcon,
+                        contentDescription = toggleDescription,
+                        tint = if (isEnabled) Color(0xFF808080) else Color(0xFFB0B0B0)
                     )
                 }
             }
@@ -358,30 +390,36 @@ private fun AirCard(
             ) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color(0xFF404040)
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = valueColor
                 )
                 Text(
                     text = unit,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF808080)
+                    fontSize = 12.sp,
+                    color = valueColor
                 )
             }
 
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF808080),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = textColor,
                 modifier = Modifier.align(Alignment.BottomStart)
             )
         }
     }
 }
 
+
 /* ---------- Pollen layout ---------- */
 
 @Composable
-private fun PollenAdjustments() {
+private fun PollenAdjustments(
+    hiddenPollenMetrics: Set<String>,
+    onTogglePollenType: (String) -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -394,6 +432,8 @@ private fun PollenAdjustments() {
                 value = 370,
                 max = 400,
                 ringColor = Color(0xFFE53935),
+                isEnabled = "Oak" !in hiddenPollenMetrics,
+                onPlusClick = { onTogglePollenType("Oak") },
                 modifier = Modifier.weight(1f)
             )
             PollenCard(
@@ -401,6 +441,8 @@ private fun PollenAdjustments() {
                 value = 20,
                 max = 100,
                 ringColor = Color(0xFF43A047),
+                isEnabled = "Weeds" !in hiddenPollenMetrics,
+                onPlusClick = { onTogglePollenType("Weeds") },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -413,6 +455,8 @@ private fun PollenAdjustments() {
                 value = 220,
                 max = 400,
                 ringColor = Color(0xFFFDD835),
+                isEnabled = "Trees" !in hiddenPollenMetrics,
+                onPlusClick = { onTogglePollenType("Trees") },
                 modifier = Modifier.weight(1f)
             )
             PollenCard(
@@ -420,6 +464,8 @@ private fun PollenAdjustments() {
                 value = 60,
                 max = 100,
                 ringColor = Color(0xFF43A047),
+                isEnabled = "Grass" !in hiddenPollenMetrics,
+                onPlusClick = { onTogglePollenType("Grass") },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -432,13 +478,22 @@ private fun PollenCard(
     value: Int,
     max: Int,
     ringColor: Color,
+    isEnabled: Boolean,
+    onPlusClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val effectiveRingColor = if (isEnabled) ringColor else Color(0xFFB0B0B0)
+    val textColor = if (isEnabled) Color(0xFF404040) else Color(0xFFB0B0B0)
+
     Card(
         modifier = modifier.height(130.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.9f)
+            containerColor = if (isEnabled) {
+                Color.White.copy(alpha = 0.9f)
+            } else {
+                Color(0xFFE0E0E0)
+            }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -447,67 +502,55 @@ private fun PollenCard(
                 .fillMaxSize()
                 .padding(14.dp)
         ) {
-            // +/- knoppen
             Row(
-                modifier = Modifier.align(Alignment.TopCenter),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.align(Alignment.TopStart),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(
-                    onClick = { /* minder */ },
+                    onClick = onPlusClick,
                     modifier = Modifier
+                        .align(Alignment.Top)
                         .size(24.dp)
                         .clip(CircleShape)
                         .background(Color.White)
                 ) {
+                    val toggleIcon = if (isEnabled) Icons.Default.Remove else Icons.Default.Add
+                    val toggleDescription = if (isEnabled) "Hide metric" else "Show metric"
+
                     Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = "Decrease",
-                        tint = Color(0xFF808080)
-                    )
-                }
-                Spacer(Modifier.width(40.dp))
-                IconButton(
-                    onClick = { /* meer */ },
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Increase",
-                        tint = Color(0xFF808080)
+                        imageVector = toggleIcon,
+                        contentDescription = toggleDescription,
+                        tint = if (isEnabled) Color(0xFF808080) else Color(0xFFB0B0B0)
                     )
                 }
             }
 
-            // Cirkel (progress)
+            val progress = (value.toFloat() / max.toFloat()).coerceIn(0f, 1f)
+
             Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val progress = (value.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-
                 Box(contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(
-                        progress = progress,
-                        modifier = Modifier.size(72.dp),
-                        strokeWidth = 8.dp,
-                        color = ringColor,
-                        trackColor = Color(0xFFE0E0E0)
+                    progress = { progress },
+                    modifier = Modifier.size(72.dp),
+                    color = effectiveRingColor,
+                    strokeWidth = 8.dp,
+                    trackColor = Color(0xFFE0E0E0),
+                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
                     )
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = name,
                             fontSize = 12.sp,
-                            color = Color(0xFF404040),
+                            color = textColor,
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = "$value ppm",
                             fontSize = 11.sp,
-                            color = Color(0xFF808080)
+                            color = textColor
                         )
                     }
                 }

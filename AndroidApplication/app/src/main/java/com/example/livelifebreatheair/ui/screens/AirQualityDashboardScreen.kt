@@ -31,10 +31,12 @@ import androidx.compose.ui.unit.sp
 import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.models.AirQualityScreenData
 
+
 @Composable
 fun AirQualityDashboardScreen(
     onProfileClick: () -> Unit = {},
-    data: AirQualityScreenData = MockData.airQualityScreen
+    data: AirQualityScreenData = MockData.airQualityScreen,
+    hiddenMetrics: Set<String> = emptySet()
 ) {
     Box(
         modifier = Modifier
@@ -58,7 +60,10 @@ fun AirQualityDashboardScreen(
 
             MainStatusCard(data)
 
-            PollutantsGrid(data)
+            PollutantsGrid(
+                data = data,
+                hiddenMetrics = hiddenMetrics
+            )
 
             ForecastRow(data)
         }
@@ -168,7 +173,8 @@ private fun MainStatusCard(
 
 @Composable
 private fun PollutantsGrid(
-    data: AirQualityScreenData
+    data: AirQualityScreenData,
+    hiddenMetrics: Set<String>
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -177,31 +183,54 @@ private fun PollutantsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PollutantCard(
-                label = data.pollutantCards[0].name,
-                value = data.pollutantCards[0].value,
-                modifier = Modifier.weight(1f)
-            )
-            PollutantCard(
-                label = data.pollutantCards[1].name,
-                value = data.pollutantCards[1].value,
-                modifier = Modifier.weight(1f)
-            )
+            val co = data.pollutantCards[0]
+            if (co.name !in hiddenMetrics) {
+                PollutantCard(
+                    label = co.name,
+                    value = co.value,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            val o3 = data.pollutantCards[1]
+            if (o3.name !in hiddenMetrics) {
+                PollutantCard(
+                    label = o3.name,
+                    value = o3.value,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PollutantCard(
-                label = data.pollutantCards[2].name,
-                value = data.pollutantCards[2].value,
-                modifier = Modifier.weight(1f)
-            )
-            PollutantCard(
-                label = data.pollutantCards[3].name,
-                value = data.pollutantCards[3].value,
-                modifier = Modifier.weight(1f)
-            )
+            val pm25 = data.pollutantCards[2]
+            if (pm25.name !in hiddenMetrics) {
+                PollutantCard(
+                    label = pm25.name,
+                    value = pm25.value,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            val pm10 = data.pollutantCards[3]
+            if (pm10.name !in hiddenMetrics) {
+                PollutantCard(
+                    label = pm10.name,
+                    value = pm10.value,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
     }
 }
@@ -222,21 +251,18 @@ private fun PollutantCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1C2433)
-                )
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color(0xFF404040)
             )
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFF7A8A9C)
-                )
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF808080)
             )
         }
     }
