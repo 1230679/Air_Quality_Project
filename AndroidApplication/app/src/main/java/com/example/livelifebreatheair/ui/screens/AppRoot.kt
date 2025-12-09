@@ -50,7 +50,6 @@ fun AppRoot() {
 
                         AirQualityDashboardScreen(
                             onProfileClick = { currentScreen = AppScreen.Profile },
-                            data = filtered,
                             hiddenMetrics = hiddenAirMetrics
                         )
                     }

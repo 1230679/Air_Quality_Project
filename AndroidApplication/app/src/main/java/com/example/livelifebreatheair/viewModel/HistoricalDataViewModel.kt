@@ -1,10 +1,11 @@
 package com.example.livelifebreatheair.viewModel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
 import com.example.livelifebreatheair.data.model.PollenData
-import com.example.livelifebreatheair.data.model.WeatherData
+import com.example.livelifebreatheair.data.model.WeatherApiResponse
 import com.example.livelifebreatheair.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,8 +21,8 @@ class HistoricalDataViewModel (
     private val _pollen = MutableStateFlow<Result<PollenData>?>(null)
     val pollen: StateFlow<Result<PollenData>?> = _pollen.asStateFlow()
 
-    private val _weather = MutableStateFlow<Result<WeatherData>?>(null)
-    val weather: StateFlow<Result<WeatherData>?> = _weather.asStateFlow()
+    private val _weather = MutableStateFlow<Result<WeatherApiResponse>?>(null)
+    val weather: StateFlow<Result<WeatherApiResponse>?> = _weather.asStateFlow()
 
     fun loadAirQuality() {
         viewModelScope.launch {
@@ -39,5 +40,17 @@ class HistoricalDataViewModel (
         viewModelScope.launch {
             _weather.value = repository.getWeatherData()
         }
+    }
+}
+
+class HistoricalDataViewModelFactory(
+    private val repository: ApiRepository = ApiRepository()
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(HistoricalDataViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return HistoricalDataViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
