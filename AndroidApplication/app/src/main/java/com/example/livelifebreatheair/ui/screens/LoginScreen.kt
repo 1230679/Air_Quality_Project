@@ -30,12 +30,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livelifebreatheair.ui.theme.LiveLifeBreatheAirTheme
 
+// Firebase imports
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+
 @Composable
 fun LoginScreen(
     onLogin: () -> Unit
 ) {
+    // Gebruik dit veld als e-mail voor Firebase
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    // Extra state voor auth
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val auth = Firebase.auth
 
     Box(
         modifier = Modifier
@@ -74,8 +85,12 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
-                placeholder = { Text("Username") },
+                onValueChange = {
+                    username = it
+                    errorMessage = null
+                },
+                // Dit is in feite het e-mail veld
+                placeholder = { Text("Email") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .shadow(8.dp, RoundedCornerShape(24.dp), clip = false)
@@ -96,7 +111,10 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    errorMessage = null
+                },
                 placeholder = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier
@@ -128,22 +146,60 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
+
+            // Foutmelding onder de velden
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = Color(0xFFFFE0E0),
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
 
             Button(
-                onClick = onLogin,
+                onClick = {
+                    // Eenvoudige validatie
+                    if (username.isBlank() || password.isBlank()) {
+                        errorMessage = "Please fill in both email and password."
+                        return@Button
+                    }
+
+                    isLoading = true
+                    errorMessage = null
+
+                    // Firebase email/password login
+                    auth.signInWithEmailAndPassword(username, password)
+                        .addOnCompleteListener { task ->
+                            isLoading = false
+                            if (task.isSuccessful) {
+                                // Succes → navigeer verder
+                                onLogin()
+                            } else {
+                                errorMessage = task.exception?.message
+                                    ?: "Login failed. Please check your credentials."
+                            }
+                        }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
                     .shadow(10.dp, RoundedCornerShape(26.dp), clip = false)
                     .clip(RoundedCornerShape(26.dp)),
+                enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color(0xFF1C2433)
                 )
             ) {
                 Text(
-                    text = "Login",
+                    text = if (isLoading) "Logging in..." else "Login",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -172,8 +228,12 @@ fun LoginScreen(
 
             Spacer(Modifier.height(14.dp))
 
+            // Google knop nog als UI (Google Sign-In implementatie is meer werk)
             Surface(
-                onClick = onLogin,
+                onClick = {
+                    // TODO: Google Sign-In koppelen als je wilt
+                    // Voor nu gewoon dezelfde onLogin aanroepen na een succesvolle Google login.
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
