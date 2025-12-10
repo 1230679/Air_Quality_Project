@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
+import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.components.LoadingView
 import com.example.livelifebreatheair.ui.models.AirQualityScreenData
 import com.example.livelifebreatheair.viewModel.HistoricalDataViewModel
@@ -57,6 +58,7 @@ fun AirQualityDashboardScreen(
 
     val nonNullData: Result<AirQualityIndexApiResponse> = data!!
     val dataValue: AirQualityIndexApiResponse? = nonNullData.getOrNull()
+    val mockData: AirQualityScreenData = MockData.airQualityScreen
 
     Box(
         modifier = Modifier
@@ -85,7 +87,7 @@ fun AirQualityDashboardScreen(
                 hiddenMetrics = hiddenMetrics
             )
 
-            //ForecastRow(data)
+            ForecastRow(mockData)
         }
     }
 }

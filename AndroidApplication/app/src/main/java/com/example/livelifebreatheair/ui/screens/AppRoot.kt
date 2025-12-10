@@ -100,7 +100,7 @@ fun AppRoot() {
                         }
                     )
 
-                    AppScreen.Login -> { /* wordt hierboven al afgehandeld */ }
+                    AppScreen.Login -> { }
                 }
             }
 

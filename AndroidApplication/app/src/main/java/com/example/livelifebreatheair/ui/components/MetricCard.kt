@@ -36,9 +36,8 @@ fun MetricCard(
         modifier = modifier.height(140.dp)
     ) {
         Box(Modifier.fillMaxSize()) {
-            // left = minus (once you import the icon), right = plus
             SmallIconButton(
-                icon = Icons.Default.Remove, // change to minus later
+                icon = Icons.Default.Remove,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(8.dp)

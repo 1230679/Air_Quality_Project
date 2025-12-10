@@ -38,11 +38,9 @@ import com.google.firebase.ktx.Firebase
 fun LoginScreen(
     onLogin: () -> Unit
 ) {
-    // Gebruik dit veld als e-mail voor Firebase
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Extra state voor auth
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -89,7 +87,6 @@ fun LoginScreen(
                     username = it
                     errorMessage = null
                 },
-                // Dit is in feite het e-mail veld
                 placeholder = { Text("Email") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,7 +145,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Foutmelding onder de velden
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
@@ -165,7 +161,6 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    // Eenvoudige validatie
                     if (username.isBlank() || password.isBlank()) {
                         errorMessage = "Please fill in both email and password."
                         return@Button
@@ -174,12 +169,10 @@ fun LoginScreen(
                     isLoading = true
                     errorMessage = null
 
-                    // Firebase email/password login
                     auth.signInWithEmailAndPassword(username, password)
                         .addOnCompleteListener { task ->
                             isLoading = false
                             if (task.isSuccessful) {
-                                // Succes → navigeer verder
                                 onLogin()
                             } else {
                                 errorMessage = task.exception?.message
@@ -228,11 +221,8 @@ fun LoginScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // Google knop nog als UI (Google Sign-In implementatie is meer werk)
             Surface(
                 onClick = {
-                    // TODO: Google Sign-In koppelen als je wilt
-                    // Voor nu gewoon dezelfde onLogin aanroepen na een succesvolle Google login.
                 },
                 modifier = Modifier
                     .fillMaxWidth()

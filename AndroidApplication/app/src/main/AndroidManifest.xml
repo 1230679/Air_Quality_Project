@@ -22,19 +22,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".settingsPages.NotificationsPage"
-            android:exported="false" />
-
-        <activity android:name=".settingsPages.PersonalData"
-            android:exported="false" />
-
-        <activity android:name=".settingsPages.SettingsPage"
-            android:exported="false" />
-
-        <activity android:name=".HistoricalData"
-            android:exported="false" />
-
     </application>
 
 </manifest>

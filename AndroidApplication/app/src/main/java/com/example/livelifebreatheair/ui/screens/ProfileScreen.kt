@@ -76,7 +76,6 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
-//                    .clip(RoundedCornerShape(24.dp))
                     .background(
                         Brush.verticalGradient(
                             listOf(
@@ -88,7 +87,6 @@ fun ProfileScreen(
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Top bar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,7 +115,6 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(24.dp))
 
-                // Welcome
                 Text(
                     text = "Welcome",
                     style = MaterialTheme.typography.titleMedium,
@@ -146,7 +143,6 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Segmented control
                 AdjustmentSegmentedControl(
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it }
@@ -154,7 +150,6 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(20.dp))
 
-                // Content
                 when (selectedTab) {
                     AdjustmentTab.AIR -> AirAdjustments(
                         hiddenAirMetrics = hiddenAirMetrics,
@@ -171,8 +166,6 @@ fun ProfileScreen(
         }
     }
 }
-
-/* ---------- Top menu items ---------- */
 
 @Composable
 private fun ProfileMenuItem(
@@ -207,8 +200,6 @@ private fun ProfileMenuItem(
         }
     }
 }
-
-/* ---------- Segmented control ---------- */
 
 @Composable
 private fun AdjustmentSegmentedControl(
@@ -276,8 +267,6 @@ private fun SegmentButton(
         )
     }
 }
-
-/* ---------- Air layout ---------- */
 
 @Composable
 private fun AirAdjustments(
@@ -411,9 +400,6 @@ private fun AirCard(
         }
     }
 }
-
-
-/* ---------- Pollen layout ---------- */
 
 @Composable
 private fun PollenAdjustments(
