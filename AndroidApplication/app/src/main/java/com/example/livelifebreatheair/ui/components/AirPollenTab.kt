@@ -14,27 +14,29 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocalFlorist
+import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.example.livelifebreatheair.ui.screens.AppScreen
 
 @Composable
-fun AirPollenTab() {
-    var selected by remember { mutableIntStateOf(0) }
+fun AirPollenTab(
+    selected: AppScreen,
+    onSelected: (AppScreen) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val cs = MaterialTheme.colorScheme
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(44.dp)
             .clip(RoundedCornerShape(24.dp))
@@ -42,12 +44,36 @@ fun AirPollenTab() {
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Segment(selected == 0, { selected = 0 }, Modifier.weight(1f)) {
+        Segment(
+            selected = selected == AppScreen.Air,
+            onClick = { onSelected(AppScreen.Air) },
+            modifier = Modifier.weight(1f)
+        ) {
             Icon(Icons.Outlined.Air, contentDescription = "Air")
         }
         Spacer(Modifier.width(6.dp))
-        Segment(selected == 1, { selected = 1 }, Modifier.weight(1f)) {
+        Segment(
+            selected = selected == AppScreen.Weather,
+            onClick = { onSelected(AppScreen.Weather) },
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(Icons.Outlined.WbSunny, contentDescription = "Weather")
+        }
+        Spacer(Modifier.width(6.dp))
+        Segment(
+            selected = selected == AppScreen.Pollen,
+            onClick = { onSelected(AppScreen.Pollen) },
+            modifier = Modifier.weight(1f)
+        ) {
             Icon(Icons.Outlined.LocalFlorist, contentDescription = "Pollen")
+        }
+        Spacer(Modifier.width(6.dp))
+        Segment(
+            selected = selected == AppScreen.History,
+            onClick = { onSelected(AppScreen.History) },
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(Icons.Outlined.History, contentDescription = "History")
         }
     }
 }
