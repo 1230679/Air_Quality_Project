@@ -24,15 +24,13 @@ try:
     if hasattr(django_settings, 'LOGGING'):
         logging.config.dictConfig(django_settings.LOGGING)
 except Exception:
-    # If logging config can't be applied here, Celery will use its default logging.
     pass
 
 # Periodic task schedule
 app.conf.beat_schedule = {
     'fetch-air-quality-every-4-hours': {
         'task': 'data_fetching.tasks.fetch_air_quality_data',
-        'schedule': crontab(minute=0, hour='*/2'),  # Every 2 hours at minute 0
-        # 'schedule': crontab(minute='*/2'),  # Every 2 minutes for testing
+        'schedule': crontab(minute=0, hour='*/2'),
     },
 }
 

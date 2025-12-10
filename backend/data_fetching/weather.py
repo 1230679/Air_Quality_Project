@@ -17,8 +17,6 @@ class Weather:
 
         for hour_data in history_hours:
             interval = hour_data.get("interval")
-            # `endTime` can appear in several shapes depending on API version: string, numeric (seconds/ms),
-            # or nested inside a dict. Make parsing resilient and skip if we can't obtain a valid timestamp.
             raw_end = None
             if isinstance(interval, dict):
                 raw_end = interval.get("endTime")
@@ -109,7 +107,6 @@ class Weather:
             response.raise_for_status()
             data = response.json()
             try:
-                # log number of history hours if present
                 history_count = len(data.get("historyHours", [])) if isinstance(data, dict) else None
                 logger.info("Fetched weather data; history_hours=%s", history_count)
             except Exception:

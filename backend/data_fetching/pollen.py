@@ -12,7 +12,6 @@ class Pollen:
         self.baseUrl = "https://pollen.googleapis.com/v1"
 
     def fill_db(self, location, response):
-        # Accept either a Location model instance or a primary key
         logger.info("fill_db called for pollen; location=%s", getattr(location, 'id', location))
         from .models import Location as LocationModel
         if hasattr(location, 'id'):
@@ -24,7 +23,6 @@ class Pollen:
                 logger.exception("Invalid location provided to fill_db: %s", location)
                 return
 
-        # Support responses that either have a top-level 'pollen' key
         data = response.get('pollen') if isinstance(response, dict) and 'pollen' in response else response
         daily_infos = data.get('dailyInfo', []) if isinstance(data, dict) else []
 
@@ -34,7 +32,6 @@ class Pollen:
             if not date:
                 continue
 
-            # date is expected as dict {year, month, day}
             if isinstance(date, dict):
                 try:
                     year = int(date.get('year'))
@@ -42,10 +39,8 @@ class Pollen:
                     day = int(date.get('day'))
                     dt = datetime(year, month, day)
                 except Exception:
-                    # skip invalid date
                     continue
             else:
-                # try parsing ISO string
                 try:
                     dt = parse_datetime(str(date))
                     if dt is None:
@@ -54,12 +49,10 @@ class Pollen:
                 except Exception:
                     continue
 
-            # make timezone-aware if naive
             if timezone.is_naive(dt):
                 try:
                     dt = timezone.make_aware(dt)
                 except Exception:
-                    # fallback to now
                     dt = timezone.now()
 
             pollen_type_infos = daily_info.get('pollenTypeInfo', []) or []
@@ -72,7 +65,6 @@ class Pollen:
                     index_value = index_info.get('value')
                     index_display_name = index_info.get('displayName') or index_info.get('category') or ''
 
-                # Ensure index_value is a float because model does not allow null
                 try:
                     index_value = float(index_value) if index_value is not None else 0.0
                 except Exception:
@@ -146,7 +138,6 @@ class Pollen:
                 'pollenTypeInfo': []
             }
             
-            # Filter only Grass, Tree, and Weed from pollenTypeInfo
             if 'pollenTypeInfo' in daily_info:
                 for pollen_type in daily_info['pollenTypeInfo']:
                     if pollen_type.get('code') in ['GRASS', 'TREE', 'WEED']:

@@ -9,8 +9,6 @@ from data_fetching.views import FetchPollenData, FetchAirQualityData, FetchWeath
 class PollenData(APIView):
     renderer_classes = [JSONRenderer]
 
-
-    # get pollen data from FetchPollenData view
     def get(self, request, *args, **kwargs):
         fetch_view = FetchPollenData()
         response = fetch_view.get(request, *args, **kwargs)
@@ -25,6 +23,13 @@ class AirQualityData(APIView):
         fetch_view = FetchAirQualityData()
         response = fetch_view.get(request, *args, **kwargs)
         print("Response from FetchAirQualityData view:")
+        pprint(response.data)
+        return response
+    
+    def get_history(self, request, *args, **kwargs):
+        fetch_view = FetchAirQualityData()
+        response = fetch_view.get_history(request, *args, **kwargs)
+        print("Response from FetchAirQualityData get_history view:")
         pprint(response.data)
         return response
 

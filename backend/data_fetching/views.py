@@ -16,7 +16,6 @@ from celery import chain
 
 
 class FetchPollenData(APIView):
-    # Force JSON-only responses
     renderer_classes = [JSONRenderer]
 
     # Default coordinates for Aarhus, Denmark
@@ -27,7 +26,7 @@ class FetchPollenData(APIView):
     end_time = "2025-06-15T12:00:00Z"
 
     pollen = Pollen()
-    location_helper = Location()  # helper instance only; do not touch DB at import time
+    location_helper = Location()
     
     def get(self, request, *args, **kwargs):
         location_obj = self.location_helper.fill_db(location=f"{self.latitude},{self.longitude}", city="Aarhus", country="Denmark")
@@ -56,10 +55,9 @@ class FetchAirQualityData(APIView):
     latitude = 56.157200
     longitude = 10.210700
 
-    location_helper = Location()  # do not call fill_db here
+    location_helper = Location()
 
     def get(self, request, *args, **kwargs):
-        # Create or update Location row at request time (avoids DB access during import)
         location_obj = self.location_helper.fill_db(location=f"{self.latitude},{self.longitude}", city="Aarhus", country="Denmark")
 
         aq_data = self.aqi.fetch_aqi_history(
@@ -73,6 +71,20 @@ class FetchAirQualityData(APIView):
             return Response({"air_quality": aq_data}, status=status.HTTP_200_OK)
         return Response({"error": "Failed to fetch air quality data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    def get_history(self, request, *args, **kwargs):
+        location_obj = self.location_helper.fill_db(location=f"{self.latitude},{self.longitude}", city="Aarhus", country="Denmark")
+
+        aq_data = self.aqi.fetch_aqi_history(
+            location={"latitude": self.latitude, "longitude": self.longitude},
+            hours=5,
+            extraComputations=[self.aqi.ExtraComputations.POLLUTANT_CONCENTRATION]
+        )
+        if aq_data:
+            pprint(aq_data)
+            self.aqi.fill_db(location=location_obj, response=aq_data)
+            return Response({"air_quality_history": aq_data}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to fetch air quality history data"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 class FetchWeatherData(APIView):
     renderer_classes = [JSONRenderer]
@@ -84,10 +96,9 @@ class FetchWeatherData(APIView):
     end_time = "2025-06-15T12:00:00Z"
 
     weather = Weather()
-    location_helper = Location()  # helper only
+    location_helper = Location()
 
     def get(self, request, *args, **kwargs):
-        # Create or update Location row at request time
         location_obj = self.location_helper.fill_db(location=f"{self.latitude},{self.longitude}", city="Aarhus", country="Denmark")
 
         weather_data = self.weather.fetch_weather_data(

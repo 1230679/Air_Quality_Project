@@ -140,7 +140,6 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 
-# Logging configuration to surface data_fetching messages to console
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

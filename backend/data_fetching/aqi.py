@@ -44,7 +44,6 @@ class AirQualityIndex:
             aqi = uaqi_entry.get("aqi") if uaqi_entry else None
             dominant_pollutant = uaqi_entry.get("dominantPollutant") if uaqi_entry else None
 
-            # Pollutant concentrations
             pollutants = {p["code"]: p for p in hour_data.get("pollutants", [])}
 
             pm25 = pollutants.get("pm25", {}).get("concentration", {}).get("value")
@@ -73,7 +72,6 @@ class AirQualityIndex:
             logger.exception("Failed to count AirQualityData")
 
         
-
     def fetch_aqi_history(self, pageSize=None, pageToken=None, location=None, extraComputations=None, uaqiColorPalette=None, customLocalAqis=None, dateTime=None, hours=None, period=None, universalAqi=None, languageCode=None):
         self.validate_pageSize(pageSize) # checks if pageSize is valid
         # self.validate_extraComputations(extraComputations) # checks if extraComputations is valid
@@ -121,6 +119,6 @@ class AirQualityIndex:
         if not is_valid:
             raise ValueError("One or more extraComputations are invalid")
         return True
-
+    
 
 
