@@ -27,13 +27,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.models.WeatherScreenData
 
 @Composable
 fun WeatherDashboardScreen(
     onProfileClick: () -> Unit = {},
-    data: WeatherScreenData = MockData.weatherScreen
+    data: WeatherScreenData
 ) {
     Box(
         modifier = Modifier
@@ -63,6 +62,7 @@ fun WeatherDashboardScreen(
         }
     }
 }
+
 
 @Composable
 private fun WeatherHeader(

@@ -49,17 +49,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.livelifebreatheair.sampleData.MockData
+import com.example.livelifebreatheair.ui.models.AirQualityScreenData
+import com.example.livelifebreatheair.ui.models.PollenScreenData
 
 enum class AdjustmentTab { AIR, POLLEN }
 
 @Composable
-fun ProfileScreen(
+    fun ProfileScreen(
     onBackClick: () -> Unit = {},
     hiddenAirMetrics: Set<String>,
     hiddenPollenTypes: Set<String>,
     onToggleAirMetric: (String) -> Unit,
-    onTogglePollenType: (String) -> Unit
-) {
+    onTogglePollenType: (String) -> Unit,
+    airData: AirQualityScreenData? = null,
+    pollenData: PollenScreenData? = null
+    ) {
+
     var selectedTab by remember { mutableStateOf(AdjustmentTab.AIR) }
 
     Surface(
@@ -158,13 +164,16 @@ fun ProfileScreen(
                 when (selectedTab) {
                     AdjustmentTab.AIR -> AirAdjustments(
                         hiddenAirMetrics = hiddenAirMetrics,
-                        onToggleAirMetric = onToggleAirMetric
+                        onToggleAirMetric = onToggleAirMetric,
+                        airData = airData ?: MockData.airQualityScreen
                     )
                     AdjustmentTab.POLLEN -> PollenAdjustments(
                         hiddenPollenMetrics = hiddenPollenTypes,
-                        onTogglePollenType = onTogglePollenType
+                        onTogglePollenType = onTogglePollenType,
+                        pollenData = pollenData ?: MockData.pollenScreen
                     )
                 }
+
 
                 Spacer(Modifier.height(12.dp))
             }
@@ -172,8 +181,7 @@ fun ProfileScreen(
     }
 }
 
-/* ---------- Top menu items ---------- */
-
+// Top menu items
 @Composable
 private fun ProfileMenuItem(
     title: String,
@@ -208,7 +216,7 @@ private fun ProfileMenuItem(
     }
 }
 
-/* ---------- Segmented control ---------- */
+// Segmented control
 
 @Composable
 private fun AdjustmentSegmentedControl(
@@ -277,13 +285,27 @@ private fun SegmentButton(
     }
 }
 
-/* ---------- Air layout ---------- */
-
+// Air layout
 @Composable
 private fun AirAdjustments(
     hiddenAirMetrics: Set<String>,
-    onToggleAirMetric: (String) -> Unit
+    onToggleAirMetric: (String) -> Unit,
+    airData: AirQualityScreenData
 ) {
+    val byName = airData.pollutantCards.associateBy { it.name }
+
+    fun splitValueUnit(raw: String): Pair<String, String> {
+        val parts = raw.trim().split(" ")
+        if (parts.isEmpty()) return "" to ""
+        if (parts.size == 1) return parts[0] to ""
+        return parts[0] to parts.drop(1).joinToString(" ")
+    }
+
+    val (coValue, coUnit) = splitValueUnit(byName["Carbon Monoxide"]?.value ?: "10 mg/m³")
+    val (o3Value, o3Unit) = splitValueUnit(byName["O₃"]?.value ?: "100 µg/m³")
+    val (pm25Value, pm25Unit) = splitValueUnit(byName["PM2.5"]?.value ?: "12 µg/m³")
+    val (pm10Value, pm10Unit) = splitValueUnit(byName["PM10"]?.value ?: "8 µg/m³")
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -292,16 +314,16 @@ private fun AirAdjustments(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AirCard(
-                value = "10",
-                unit = "mg/m³",
+                value = coValue,
+                unit = coUnit,
                 label = "Carbon Monoxide",
                 isEnabled = "Carbon Monoxide" !in hiddenAirMetrics,
                 onPlusClick = { onToggleAirMetric("Carbon Monoxide") },
                 modifier = Modifier.weight(1f)
             )
             AirCard(
-                value = "100",
-                unit = "µg/m³",
+                value = o3Value,
+                unit = o3Unit,
                 label = "O₃",
                 isEnabled = "O₃" !in hiddenAirMetrics,
                 onPlusClick = { onToggleAirMetric("O₃") },
@@ -313,16 +335,16 @@ private fun AirAdjustments(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AirCard(
-                value = "12",
-                unit = "µg/m³",
+                value = pm25Value,
+                unit = pm25Unit,
                 label = "PM2.5",
                 isEnabled = "PM2.5" !in hiddenAirMetrics,
                 onPlusClick = { onToggleAirMetric("PM2.5") },
                 modifier = Modifier.weight(1f)
             )
             AirCard(
-                value = "8",
-                unit = "µg/m³",
+                value = pm10Value,
+                unit = pm10Unit,
                 label = "PM10",
                 isEnabled = "PM10" !in hiddenAirMetrics,
                 onPlusClick = { onToggleAirMetric("PM10") },
@@ -331,7 +353,6 @@ private fun AirAdjustments(
         }
     }
 }
-
 
 @Composable
 private fun AirCard(
@@ -413,13 +434,25 @@ private fun AirCard(
 }
 
 
-/* ---------- Pollen layout ---------- */
-
+// Pollen layout
 @Composable
 private fun PollenAdjustments(
     hiddenPollenMetrics: Set<String>,
-    onTogglePollenType: (String) -> Unit
+    onTogglePollenType: (String) -> Unit,
+    pollenData: PollenScreenData
 ) {
+    val byName = pollenData.typeCards.associateBy { it.name }
+
+    fun extractNumber(raw: String): Int {
+        val digits = raw.takeWhile { it.isDigit() }
+        return digits.toIntOrNull() ?: 0
+    }
+
+    val oakValue = extractNumber(byName["Oak"]?.value ?: "370 ppm")
+    val weedsValue = extractNumber(byName["Weeds"]?.value ?: "20 ppm")
+    val treesValue = extractNumber(byName["Trees"]?.value ?: "220 ppm")
+    val grassValue = extractNumber(byName["Grass"]?.value ?: "60 ppm")
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -429,7 +462,7 @@ private fun PollenAdjustments(
         ) {
             PollenCard(
                 name = "Oak",
-                value = 370,
+                value = oakValue,
                 max = 400,
                 ringColor = Color(0xFFE53935),
                 isEnabled = "Oak" !in hiddenPollenMetrics,
@@ -438,7 +471,7 @@ private fun PollenAdjustments(
             )
             PollenCard(
                 name = "Weeds",
-                value = 20,
+                value = weedsValue,
                 max = 100,
                 ringColor = Color(0xFF43A047),
                 isEnabled = "Weeds" !in hiddenPollenMetrics,
@@ -452,7 +485,7 @@ private fun PollenAdjustments(
         ) {
             PollenCard(
                 name = "Trees",
-                value = 220,
+                value = treesValue,
                 max = 400,
                 ringColor = Color(0xFFFDD835),
                 isEnabled = "Trees" !in hiddenPollenMetrics,
@@ -461,7 +494,7 @@ private fun PollenAdjustments(
             )
             PollenCard(
                 name = "Grass",
-                value = 60,
+                value = grassValue,
                 max = 100,
                 ringColor = Color(0xFF43A047),
                 isEnabled = "Grass" !in hiddenPollenMetrics,
@@ -471,6 +504,7 @@ private fun PollenAdjustments(
         }
     }
 }
+
 
 @Composable
 private fun PollenCard(

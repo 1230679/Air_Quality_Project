@@ -6,6 +6,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
+import android.util.Log
 
 interface IApiService {
     suspend fun getAirQualityData(): Result<AirQualityIndexApiResponse>
@@ -17,7 +18,7 @@ class ApiService : IApiService {
     private val client = ApiClient.client
     private val baseUrl = "http://10.0.2.2:8000/api"
 
-    override suspend fun getAirQualityData(): Result<AirQualityIndexApiResponse> {
+    /* override suspend fun getAirQualityData(): Result<AirQualityIndexApiResponse> {
         return try {
             val response = client.get("${baseUrl}/aqi_data") {
                 contentType(ContentType.Application.Json)
@@ -30,7 +31,30 @@ class ApiService : IApiService {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    } */
+    override suspend fun getAirQualityData(): Result<AirQualityIndexApiResponse> {
+        return try {
+            val response = client.get("${baseUrl}/aqi_data") {
+                contentType(ContentType.Application.Json)
+            }
+            val bodyString = response.body<String>()
+
+            Log.d("ApiService", "AQI status=${response.status}, body=$bodyString")
+
+            if (response.status != HttpStatusCode.OK) {
+                return Result.failure(Exception("Failed to get air quality data: ${response.status}"))
+            }
+
+            val parsed = Json.decodeFromString<AirQualityIndexApiResponse>(bodyString)
+            Log.d("ApiService", "AQI parsed object=$parsed")
+
+            Result.success(parsed)
+        } catch (e: Exception) {
+            Log.e("ApiService", "Error getting AQI", e)
+            Result.failure(e)
+        }
     }
+
 
     override suspend fun getPollenData(): Result<PollenData> {
         return try {

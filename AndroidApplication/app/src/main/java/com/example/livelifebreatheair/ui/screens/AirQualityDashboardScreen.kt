@@ -31,11 +31,10 @@ import androidx.compose.ui.unit.sp
 import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.models.AirQualityScreenData
 
-
 @Composable
 fun AirQualityDashboardScreen(
     onProfileClick: () -> Unit = {},
-    data: AirQualityScreenData = MockData.airQualityScreen,
+    data: AirQualityScreenData,
     hiddenMetrics: Set<String> = emptySet()
 ) {
     Box(
@@ -69,6 +68,7 @@ fun AirQualityDashboardScreen(
         }
     }
 }
+
 
 @Composable
 private fun Header(
