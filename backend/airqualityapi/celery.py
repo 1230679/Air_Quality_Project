@@ -16,12 +16,21 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
 
+# Configure logging for Celery processes using Django LOGGING settings so
+# worker/beat output includes the `data_fetching` loggers we added.
+try:
+    import logging.config
+    from django.conf import settings as django_settings
+    if hasattr(django_settings, 'LOGGING'):
+        logging.config.dictConfig(django_settings.LOGGING)
+except Exception:
+    pass
+
 # Periodic task schedule
 app.conf.beat_schedule = {
     'fetch-air-quality-every-4-hours': {
         'task': 'data_fetching.tasks.fetch_air_quality_data',
-        # 'schedule': crontab(minute=0, hour='*/4'),  # Every 4 hours at minute 0
-        'schedule': crontab(minute='*/2'),  # Every 2 minutes for testing
+        'schedule': crontab(minute=0, hour='*/2'),
     },
 }
 

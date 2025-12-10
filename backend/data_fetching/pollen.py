@@ -1,15 +1,18 @@
+import logging
 from .config import API_KEY
 from .models import PollenData
 import requests
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 
+logger = logging.getLogger('data_fetching.pollen')
+
 class Pollen:
     def __init__(self):
         self.baseUrl = "https://pollen.googleapis.com/v1"
 
     def fill_db(self, location, response):
-        # Accept either a Location model instance or a primary key
+        logger.info("fill_db called for pollen; location=%s", getattr(location, 'id', location))
         from .models import Location as LocationModel
         if hasattr(location, 'id'):
             location_obj = location
@@ -17,10 +20,9 @@ class Pollen:
             try:
                 location_obj = LocationModel.objects.get(pk=location)
             except Exception:
-                print(f"Invalid location provided to fill_db: {location}")
+                logger.exception("Invalid location provided to fill_db: %s", location)
                 return
 
-        # Support responses that either have a top-level 'pollen' key
         data = response.get('pollen') if isinstance(response, dict) and 'pollen' in response else response
         daily_infos = data.get('dailyInfo', []) if isinstance(data, dict) else []
 
@@ -30,7 +32,6 @@ class Pollen:
             if not date:
                 continue
 
-            # date is expected as dict {year, month, day}
             if isinstance(date, dict):
                 try:
                     year = int(date.get('year'))
@@ -38,10 +39,8 @@ class Pollen:
                     day = int(date.get('day'))
                     dt = datetime(year, month, day)
                 except Exception:
-                    # skip invalid date
                     continue
             else:
-                # try parsing ISO string
                 try:
                     dt = parse_datetime(str(date))
                     if dt is None:
@@ -50,12 +49,10 @@ class Pollen:
                 except Exception:
                     continue
 
-            # make timezone-aware if naive
             if timezone.is_naive(dt):
                 try:
                     dt = timezone.make_aware(dt)
                 except Exception:
-                    # fallback to now
                     dt = timezone.now()
 
             pollen_type_infos = daily_info.get('pollenTypeInfo', []) or []
@@ -68,7 +65,6 @@ class Pollen:
                     index_value = index_info.get('value')
                     index_display_name = index_info.get('displayName') or index_info.get('category') or ''
 
-                # Ensure index_value is a float because model does not allow null
                 try:
                     index_value = float(index_value) if index_value is not None else 0.0
                 except Exception:
@@ -87,12 +83,12 @@ class Pollen:
                 try:
                     PollenData.objects.update_or_create(defaults=defaults, **lookup)
                 except Exception as e:
-                    print(f"Failed saving pollen record ({display_name} @ {dt}): {e}")
+                    logger.exception("Failed saving pollen record (%s @ %s): %s", display_name, dt, e)
 
         try:
-            print(f"COUNT OF POLLEN DATA: {PollenData.objects.count()}")
+            logger.info("COUNT OF POLLEN DATA: %s", PollenData.objects.count())
         except Exception:
-            pass
+            logger.exception("Failed to count pollen data")
 
 
 
@@ -123,7 +119,7 @@ class Pollen:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching pollen forecast data: {e}")
+            logger.exception("Error fetching pollen forecast data: %s", e)
             return None
     
     def filter_pollen_data(self, pollen_data):
@@ -142,7 +138,6 @@ class Pollen:
                 'pollenTypeInfo': []
             }
             
-            # Filter only Grass, Tree, and Weed from pollenTypeInfo
             if 'pollenTypeInfo' in daily_info:
                 for pollen_type in daily_info['pollenTypeInfo']:
                     if pollen_type.get('code') in ['GRASS', 'TREE', 'WEED']:
