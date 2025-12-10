@@ -28,14 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.models.PollenScreenData
-
 
 @Composable
 fun PollenDashboardScreen(
     onProfileClick: () -> Unit = {},
-    data: PollenScreenData = MockData.pollenScreen,
+    data: PollenScreenData,
     hiddenTypes: Set<String> = emptySet()
 ) {
     Box(
@@ -69,6 +67,7 @@ fun PollenDashboardScreen(
         }
     }
 }
+
 
 @Composable
 private fun PollenHeader(

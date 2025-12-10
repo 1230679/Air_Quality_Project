@@ -30,11 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
-import com.example.livelifebreatheair.data.model.WeatherApiResponse
-import com.example.livelifebreatheair.sampleData.MockData
-import com.example.livelifebreatheair.ui.components.LoadingView
 import com.example.livelifebreatheair.ui.models.WeatherScreenData
 import com.example.livelifebreatheair.viewModel.HistoricalDataViewModel
 import com.example.livelifebreatheair.viewModel.HistoricalDataViewModelFactory
@@ -42,6 +37,7 @@ import com.example.livelifebreatheair.viewModel.HistoricalDataViewModelFactory
 @Composable
 fun WeatherDashboardScreen(
     onProfileClick: () -> Unit = {},
+    data: WeatherScreenData
 ) {
     val viewModel: HistoricalDataViewModel = viewModel(factory = HistoricalDataViewModelFactory())
     LaunchedEffect(Unit) {
@@ -85,6 +81,7 @@ fun WeatherDashboardScreen(
         }
     }
 }
+
 
 @Composable
 private fun WeatherHeader(

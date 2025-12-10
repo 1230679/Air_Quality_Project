@@ -38,10 +38,10 @@ import com.example.livelifebreatheair.ui.models.AirQualityScreenData
 import com.example.livelifebreatheair.viewModel.HistoricalDataViewModel
 import com.example.livelifebreatheair.viewModel.HistoricalDataViewModelFactory
 
-
 @Composable
 fun AirQualityDashboardScreen(
     onProfileClick: () -> Unit = {},
+    data: AirQualityScreenData,
     hiddenMetrics: Set<String> = emptySet()
 ) {
     val viewModel: HistoricalDataViewModel = viewModel(factory = HistoricalDataViewModelFactory())
@@ -89,6 +89,7 @@ fun AirQualityDashboardScreen(
         }
     }
 }
+
 
 @Composable
 private fun Header(
