@@ -174,7 +174,6 @@ enum class AdjustmentTab { AIR, POLLEN }
                     )
                 }
 
-
                 Spacer(Modifier.height(12.dp))
             }
         }
@@ -504,7 +503,6 @@ private fun PollenAdjustments(
         }
     }
 }
-
 
 @Composable
 private fun PollenCard(

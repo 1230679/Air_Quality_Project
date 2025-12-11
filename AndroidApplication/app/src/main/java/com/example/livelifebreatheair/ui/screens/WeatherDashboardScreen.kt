@@ -17,9 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,28 +28,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livelifebreatheair.ui.models.WeatherScreenData
-import com.example.livelifebreatheair.viewModel.HistoricalDataViewModel
-import com.example.livelifebreatheair.viewModel.HistoricalDataViewModelFactory
+
 
 @Composable
 fun WeatherDashboardScreen(
     onProfileClick: () -> Unit = {},
     data: WeatherScreenData
 ) {
-    val viewModel: HistoricalDataViewModel = viewModel(factory = HistoricalDataViewModelFactory())
-    LaunchedEffect(Unit) {
-        viewModel.loadWeather()
-    }
-
-    val data by viewModel.weather.collectAsState()
-    if(data == null) {
-        LoadingView()
-        return
-    }
-
-    val nonNullData: Result<WeatherApiResponse> = data!!
-    val dataValue: WeatherApiResponse? = nonNullData.getOrNull()
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -73,14 +55,15 @@ fun WeatherDashboardScreen(
         ) {
             WeatherHeader(onProfileClick = onProfileClick)
 
-            WeatherMainCard(dataValue!!)
+            WeatherMainCard(data)
 
-            WeatherDetailsRow(dataValue)
+            WeatherDetailsRow(data)
 
             WeatherForecastRow()
         }
     }
 }
+
 
 
 @Composable
@@ -117,7 +100,7 @@ private fun WeatherHeader(
 
 @Composable
 private fun WeatherMainCard(
-    data: WeatherApiResponse
+    data: WeatherScreenData
 ) {
     Surface(
         modifier = Modifier
@@ -137,7 +120,7 @@ private fun WeatherMainCard(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = data.weather.historyHours[0].temperature.degrees.toString(),
+                text = data.temperature,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF1C2433)
@@ -146,7 +129,7 @@ private fun WeatherMainCard(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = data.weather.historyHours[0].weatherCondition.description.text,
+                text = data.description,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color(0xFF4C5C6E)
                 ),
@@ -191,7 +174,7 @@ private fun WeatherIcon() {
 
 @Composable
 private fun WeatherDetailsRow(
-    data: WeatherApiResponse
+    data: WeatherScreenData
 ) {
     Surface(
         modifier = Modifier
@@ -209,15 +192,15 @@ private fun WeatherDetailsRow(
         ) {
             WeatherDetailItem(
                 label = "Wind",
-                value = data.weather.historyHours[0].wind.speed.value.toString()
+                value = data.windSpeed
             )
             WeatherDetailItem(
                 label = "Humidity",
-                value = data.weather.historyHours[0].relativeHumidity.toString()
+                value = data.humidityPercentage
             )
             WeatherDetailItem(
                 label = "Rain",
-                value = data.weather.historyHours[0].precipitation.probability.percent.toString()
+                value = data.rainProbability
             )
         }
     }

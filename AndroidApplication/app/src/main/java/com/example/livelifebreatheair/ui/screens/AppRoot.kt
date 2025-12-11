@@ -3,28 +3,28 @@ package com.example.livelifebreatheair.ui.screens
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
 import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
 import com.example.livelifebreatheair.data.model.PollenData
-import com.example.livelifebreatheair.data.model.WeatherData
+import com.example.livelifebreatheair.data.model.WeatherApiResponse
 import com.example.livelifebreatheair.data.repository.ApiRepository
 import com.example.livelifebreatheair.sampleData.MockData
 import com.example.livelifebreatheair.ui.components.AirPollenTab
-import com.example.livelifebreatheair.ui.models.AirQualityScreenData
-import com.example.livelifebreatheair.ui.models.PollenScreenData
-import com.example.livelifebreatheair.ui.models.WeatherScreenData
 import com.example.livelifebreatheair.ui.models.AirQualityForecastItem
+import com.example.livelifebreatheair.ui.models.AirQualityScreenData
 import com.example.livelifebreatheair.ui.models.PollenForecastItem
+import com.example.livelifebreatheair.ui.models.PollenScreenData
 import com.example.livelifebreatheair.ui.models.PollenTypeCard
 import com.example.livelifebreatheair.ui.models.PollutantCard
+import com.example.livelifebreatheair.ui.models.WeatherScreenData
 
 @Composable
 fun AppRoot(
@@ -52,7 +52,8 @@ fun AppRoot(
 
                 val airResult = repository.getAirQualityData()
                 val pollenResult = repository.getPollenData()
-                val weatherResult = repository.getWeatherData()
+                //val weatherResult = repository.getWeatherData()
+                val weatherResult: Result<WeatherApiResponse> = repository.getWeatherData()
 
                 airResult
                     .onSuccess { api -> airUiData = api.toAirQualityScreenData() }
@@ -63,8 +64,12 @@ fun AppRoot(
                     .onFailure { e -> errorMessage = (errorMessage ?: "") + "\nPollen: ${e.message}" }
 
                 weatherResult
-                    .onSuccess { api -> weatherUiData = api.toWeatherScreenData() }
-                    .onFailure { e -> errorMessage = (errorMessage ?: "") + "\nWeather: ${e.message}" }
+                    .onSuccess { api: WeatherApiResponse ->
+                        weatherUiData = api.toWeatherScreenData()
+                    }
+                    .onFailure { e ->
+                        errorMessage = (errorMessage ?: "") + "\nWeather: ${e.message}"
+                    }
 
                 isLoading = false
             }
@@ -181,6 +186,8 @@ fun AppRoot(
     }
 }
 
+// Mapping from the API to the UI models
+
 private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScreenData {
     val firstHour = airQuality.firstOrNull() ?: return MockData.airQualityScreen
 
@@ -190,6 +197,7 @@ private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScree
 
     val pollutantByCode = firstHour.pollutants.associateBy { it.code.lowercase() }
 
+    // Map to fixed order so it matches Profile & dashboard
     val pollutantCards = listOf(
         "Carbon Monoxide" to "co",
         "O₃" to "o3",
@@ -261,24 +269,26 @@ private fun PollenData.toPollenScreenData(): PollenScreenData {
     )
 }
 
-private fun WeatherData.toWeatherScreenData(): WeatherScreenData {
-    val hourly = weather.hourly
-    val units = weather.hourlyUnits
+private fun WeatherApiResponse.toWeatherScreenData(): WeatherScreenData {
+    val current = weather.historyHours.firstOrNull()
+        ?: return MockData.weatherScreen
 
-    val i = 0
-
-    val temp = hourly.temperature2m.getOrNull(i) ?: 0.0
-    val feelsLike = hourly.apparentTemperature.getOrNull(i) ?: temp
-    val humidity = hourly.relativeHumidity2m.getOrNull(i) ?: 0
-    val wind = hourly.windSpeed10m.getOrNull(i) ?: 0.0
-    val uv = hourly.uvIndex.getOrNull(i) ?: 0
+    val temp = current.temperature
+    val feelsLike = current.feelsLikeTemperature
+    val humidity = current.relativeHumidity
+    val wind = current.wind.speed
+    val rainProbability = current.precipitation.probability
 
     return WeatherScreenData(
-        temperature = "${temp.toInt()}${units.temperature2m}",
-        description = "Feels like ${feelsLike.toInt()}${units.apparentTemperature}. UV index: $uv.",
-        windSpeed = "${wind.toInt()}${units.windSpeed10m}",
-        humidityPercentage = "$humidity ${units.relativeHumidity2m}",
-        rainProbability = "UV $uv"
+        temperature = "${temp.degrees.toInt()}°${temp.unit}",
+        description = buildString {
+            append(current.weatherCondition.description.text)
+            append(". Feels like ${feelsLike.degrees.toInt()}°${feelsLike.unit}.")
+            append(" UV index: ${current.uvIndex}.")
+        },
+        windSpeed = "${wind.value} ${wind.unit}",
+        humidityPercentage = "$humidity%",
+        rainProbability = "${rainProbability.percent}%"
     )
 }
 
