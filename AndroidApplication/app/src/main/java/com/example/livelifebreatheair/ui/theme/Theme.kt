@@ -5,6 +5,22 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
+private val AirQualityScheme = lightColorScheme(
+    primary = QualityGreen,
+    secondary = QualityYellow,
+    tertiary = QualityRed,
+    background = GradientBlueEnd,
+    onBackground = White,
+    surface = GradientBlueStart,
+    surfaceContainer = BarBlue,
+    primaryContainer = White,
+    onPrimaryContainer = Black,
+    secondaryContainer = White30,
+    onSecondaryContainer = Black,
+    tertiaryContainer = Black,
+    onTertiaryContainer = White,
+    )
+
 private val DarkColorScheme = darkColorScheme(
     primary = CardGrey,
     onPrimary = TextOnLight,
@@ -17,7 +33,6 @@ private val DarkColorScheme = darkColorScheme(
     surface = PanelBackground,
     onSurface = TextOnLight,
 )
-
 
 private val LightColorScheme = lightColorScheme(
     primary = CardYellow,
@@ -41,8 +56,8 @@ fun LiveLifeBreatheAirTheme(
     dynamicColor: Boolean = false,         // IMPORTANT: don’t use system dynamic colors
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
-        // if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = AirQualityScheme
+    // if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

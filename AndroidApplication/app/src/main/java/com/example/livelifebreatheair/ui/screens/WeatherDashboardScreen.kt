@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.livelifebreatheair.ui.models.WeatherForecastItem
 import com.example.livelifebreatheair.ui.models.WeatherScreenData
 
 
@@ -59,7 +60,7 @@ fun WeatherDashboardScreen(
 
             WeatherDetailsRow(data)
 
-            WeatherForecastRow()
+            WeatherForecastRow(data)
         }
     }
 }
@@ -230,7 +231,9 @@ private fun WeatherDetailItem(
 }
 
 @Composable
-private fun WeatherForecastRow() {
+private fun WeatherForecastRow(
+    data: WeatherScreenData
+) {
     Column(
         modifier = Modifier.padding(top = 8.dp)
     ) {
@@ -248,7 +251,14 @@ private fun WeatherForecastRow() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            repeat(4) {
+            // If the list is empty, keep the old 4 placeholders so UI doesn't look broken
+            val items = if (data.forecastItems.isNotEmpty()) {
+                data.forecastItems.take(4)
+            } else {
+                List(4) { WeatherForecastItem(label = "", condition = "Cloudy") }
+            }
+
+            items.forEach { item ->
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = Color(0xE6F3F7FF),
@@ -264,10 +274,11 @@ private fun WeatherForecastRow() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
+                        // Only displays weather cloud for now
                         WeatherCloudMini()
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Cloudy",
+                            text = item.condition,
                             fontSize = 11.sp,
                             color = Color(0xFF4C5C6E)
                         )

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.livelifebreatheair.HistoricalDataScreen
 import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
 import com.example.livelifebreatheair.data.model.PollenData
 import com.example.livelifebreatheair.data.model.WeatherApiResponse
@@ -24,6 +25,7 @@ import com.example.livelifebreatheair.ui.models.PollenForecastItem
 import com.example.livelifebreatheair.ui.models.PollenScreenData
 import com.example.livelifebreatheair.ui.models.PollenTypeCard
 import com.example.livelifebreatheair.ui.models.PollutantCard
+import com.example.livelifebreatheair.ui.models.WeatherForecastItem
 import com.example.livelifebreatheair.ui.models.WeatherScreenData
 
 @Composable
@@ -144,7 +146,7 @@ fun AppRoot(
                         }
 
                         AppScreen.History -> HistoricalDataScreen(
-                            onProfileClick = { currentScreen = AppScreen.Profile }
+                            // onProfileClick = { currentScreen = AppScreen.Profile }
                         )
 
                         AppScreen.Profile -> {
@@ -188,16 +190,54 @@ fun AppRoot(
 
 // Mapping from the API to the UI models
 
+private fun formatConcentrationUnits(units: String): String {
+    return when (units.uppercase()) {
+        "PARTS_PER_BILLION" -> "ppb"
+        "PARTS_PER_MILLION" -> "ppm"
+        "MICROGRAMS_PER_CUBIC_METER" -> "µg/m³"
+        "MILLIGRAMS_PER_CUBIC_METER" -> "mg/m³"
+        else -> units.replace("_", " ").lowercase()
+    }
+}
+
+private fun formatTemperature(temp: com.example.livelifebreatheair.data.model.Temperature): String {
+    val symbol = when (temp.unit.uppercase()) {
+        "CELSIUS" -> "°C"
+        "FAHRENHEIT" -> "°F"
+        else -> "°"
+    }
+    return "${temp.degrees.toInt()}$symbol"
+}
+
+private fun formatWind(speed: com.example.livelifebreatheair.data.model.Speed): String {
+    val unit = when (speed.unit.uppercase()) {
+        "KILOMETERS_PER_HOUR" -> "km/h"
+        "MILES_PER_HOUR" -> "mph"
+        "METERS_PER_SECOND" -> "m/s"
+        else -> speed.unit.lowercase()
+    }
+    return "${speed.value} $unit"
+}
+
+// --- Air quality ----------------------------------------------------------
+
 private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScreenData {
     val firstHour = airQuality.hoursInfo.firstOrNull() ?: return MockData.airQualityScreen
 
     val mainIndex = firstHour.indexes.firstOrNull()
-    val category = mainIndex?.category ?: "Unknown"
+    val rawCategory = mainIndex?.category ?: "Unknown"
+
+    // Turn "Good air quality" -> "Good"
+    val cleanCategory = rawCategory
+        .replace("air quality", "", ignoreCase = true)
+        .trim()
+        .ifEmpty { rawCategory }
+
     val indexValue = mainIndex?.aqi?.toString() ?: "--"
 
     val pollutantByCode = firstHour.pollutants.associateBy { it.code.lowercase() }
 
-    // Map to fixed order so it matches Profile & dashboard
+    // Fixed order to match dashboard + profile
     val pollutantCards = listOf(
         "Carbon Monoxide" to "co",
         "O₃" to "o3",
@@ -205,32 +245,36 @@ private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScree
         "PM10" to "pm10"
     ).map { (label, code) ->
         val pollutant = pollutantByCode[code]
-        val value = pollutant?.let {
-            "${it.concentration.value} ${it.concentration.units}"
+        val valueText = pollutant?.let {
+            val prettyUnits = formatConcentrationUnits(it.concentration.units)
+            val roundedValue = String.format(java.util.Locale.getDefault(), "%.0f", it.concentration.value)
+            "$roundedValue $prettyUnits"
         } ?: "--"
         PollutantCard(
             name = label,
-            value = value
+            value = valueText
         )
     }
 
-
+    // Chips should look like: "index" / "12–16"
     val forecastItems = airQuality.hoursInfo.take(4).map { hour ->
-        val index = hour.indexes.firstOrNull()
+        val idx = hour.indexes.firstOrNull()
         AirQualityForecastItem(
-            label = hour.dateTime.substring(11, 16), // "HH:MM"
-            range = index?.aqiDisplay ?: "N/A"
+            label = "index",
+            range = idx?.aqiDisplay ?: "--"
         )
     }
 
     return AirQualityScreenData(
-        overallCategory = category,
+        overallCategory = cleanCategory,
         index = "Index: $indexValue",
-        description = "The air quality is currently $category in your area.",
+        description = "The air quality is currently ${cleanCategory.lowercase()} in your area.",
         pollutantCards = pollutantCards,
         forecastItems = forecastItems
     )
 }
+
+// --- Pollen ---------------------------------------------------------------
 
 private fun PollenData.toPollenScreenData(): PollenScreenData {
     val firstDay = pollen.dailyInfo.firstOrNull() ?: return MockData.pollenScreen
@@ -249,12 +293,12 @@ private fun PollenData.toPollenScreenData(): PollenScreenData {
     }
 
     val forecastItems = pollen.dailyInfo.take(4).map { day ->
-        val code = day.pollenTypeInfo
+        val idx = day.pollenTypeInfo
             .maxByOrNull { it.indexInfo.value }
             ?.indexInfo
         PollenForecastItem(
             label = "${day.date.day}/${day.date.month}",
-            range = code?.category ?: "N/A"
+            range = idx?.category ?: "N/A"
         )
     }
 
@@ -269,28 +313,42 @@ private fun PollenData.toPollenScreenData(): PollenScreenData {
     )
 }
 
-private fun WeatherApiResponse.toWeatherScreenData(): WeatherScreenData {
-    val current = weather.historyHours.firstOrNull()
-        ?: return MockData.weatherScreen
+// --- Weather --------------------------------------------------------------
 
-    val temp = current.temperature
-    val feelsLike = current.feelsLikeTemperature
+private fun WeatherApiResponse.toWeatherScreenData(): WeatherScreenData {
+    val hours = weather.historyHours
+    val current = hours.firstOrNull() ?: return MockData.weatherScreen
+
+    fun formatTime(hour: com.example.livelifebreatheair.data.model.HistoryHour): String {
+        val h = hour.displayDateTime.hours.toString().padStart(2, '0')
+        val m = hour.displayDateTime.minutes.toString().padStart(2, '0')
+        return "$h:$m"
+    }
+
+    val tempLabel = formatTemperature(current.temperature)
+    val feelsLikeLabel = formatTemperature(current.feelsLikeTemperature)
     val humidity = current.relativeHumidity
-    val wind = current.wind.speed
-    val rainProbability = current.precipitation.probability
+    val windLabel = formatWind(current.wind.speed)
+    val rainProb = current.precipitation.probability.percent
+
+    // Build 4 forecast items from the next 4 hours (including current)
+    val forecastItems = hours.take(4).map { hour ->
+        WeatherForecastItem(
+            label = formatTime(hour),
+            condition = hour.weatherCondition.description.text
+        )
+    }
 
     return WeatherScreenData(
-        temperature = "${temp.degrees.toInt()}°${temp.unit}",
+        temperature = tempLabel,
         description = buildString {
             append(current.weatherCondition.description.text)
-            append(". Feels like ${feelsLike.degrees.toInt()}°${feelsLike.unit}.")
+            append(". Feels like $feelsLikeLabel.")
             append(" UV index: ${current.uvIndex}.")
         },
-        windSpeed = "${wind.value} ${wind.unit}",
-        humidityPercentage = "$humidity%",
-        rainProbability = "${rainProbability.percent}%"
+        windSpeed = windLabel,
+        humidityPercentage = "$humidity %",
+        rainProbability = "$rainProb %",
+        forecastItems = forecastItems
     )
 }
-
-
-
