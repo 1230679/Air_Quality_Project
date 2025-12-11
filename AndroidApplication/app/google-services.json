@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "566795538910",
+    "project_id": "au2025-41862",
+    "storage_bucket": "au2025-41862.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:566795538910:android:72eb8abc72ebdd13898d4f",
+        "android_client_info": {
+          "package_name": "com.example.livelifebreatheair"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAK6DCB4Ax6HU55KVp1d0IYUz-t6Z-dOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
