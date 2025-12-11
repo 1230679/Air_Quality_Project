@@ -30,3 +30,16 @@ val CardGrey      = Color(0xFFD6D6D6)
 val CardLightGrey = Color(0xFFF7F7F7)
 val TextOnDark    = Color(0xFFF5F5F5)
 val TextOnLight   = Color(0xFF111111)
+
+//App colors
+val White = Color(0xFFFFFFFF)
+val White30 = Color(0x4DFFFFFF)
+val Black = Color(0xFF2F2F2F)
+val BarBlue = Color(color=0xFF5383B1)
+val GradientBlueEnd = Color(0xFFAAC3FE)
+val GradientBlueStart = Color(0xFFC5F1FE)
+val QualityGreen = Color(0xFF539B00)
+val QualityYellow = Color(0xFFFFFB00)
+val QualityRed = Color(0xFFFF4141)
+
+
