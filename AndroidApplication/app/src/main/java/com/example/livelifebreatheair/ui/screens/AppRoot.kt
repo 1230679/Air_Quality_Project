@@ -189,7 +189,7 @@ fun AppRoot(
 // Mapping from the API to the UI models
 
 private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScreenData {
-    val firstHour = airQuality.firstOrNull() ?: return MockData.airQualityScreen
+    val firstHour = airQuality.hoursInfo.firstOrNull() ?: return MockData.airQualityScreen
 
     val mainIndex = firstHour.indexes.firstOrNull()
     val category = mainIndex?.category ?: "Unknown"
@@ -214,12 +214,12 @@ private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScree
         )
     }
 
-    val forecastItems = airQuality.take(4).map { hour ->
-        val hourPart = hour.dateTime.substringAfter("T", hour.dateTime)
-        val idx = hour.indexes.firstOrNull()
+
+    val forecastItems = airQuality.hoursInfo.take(4).map { hour ->
+        val index = hour.indexes.firstOrNull()
         AirQualityForecastItem(
-            label = hourPart,
-            range = idx?.aqiDisplay ?: "--"
+            label = hour.dateTime.substring(11, 16), // "HH:MM"
+            range = index?.aqiDisplay ?: "N/A"
         )
     }
 
