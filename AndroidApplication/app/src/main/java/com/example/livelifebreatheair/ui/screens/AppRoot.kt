@@ -1,5 +1,7 @@
 package com.example.livelifebreatheair.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.livelifebreatheair.HistoricalDataScreen
 import com.example.livelifebreatheair.data.model.AirQualityIndexApiResponse
+import com.example.livelifebreatheair.data.model.AirQualityIndexForecastResponse
 import com.example.livelifebreatheair.data.model.PollenData
 import com.example.livelifebreatheair.data.model.WeatherApiResponse
 import com.example.livelifebreatheair.data.repository.ApiRepository
@@ -27,7 +30,14 @@ import com.example.livelifebreatheair.ui.models.PollenTypeCard
 import com.example.livelifebreatheair.ui.models.PollutantCard
 import com.example.livelifebreatheair.ui.models.WeatherForecastItem
 import com.example.livelifebreatheair.ui.models.WeatherScreenData
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import kotlin.text.format
+import kotlin.text.toInt
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppRoot(
     repository: ApiRepository = ApiRepository()
@@ -56,9 +66,21 @@ fun AppRoot(
                 val pollenResult = repository.getPollenData()
                 //val weatherResult = repository.getWeatherData()
                 val weatherResult: Result<WeatherApiResponse> = repository.getWeatherData()
+                val aqiForecastResult: Result<AirQualityIndexForecastResponse> = repository.getAirQualityIndexForecast()
+
+                aqiForecastResult
+                    .onSuccess { /* nothing to do here */ }
+                    .onFailure { e ->
+                        errorMessage = (errorMessage ?: "") + "\nAQI Forecast: ${e.message}"
+                    }
+
+                val aqiForecastData = aqiForecastResult
+                    .getOrNull()
+                    ?.toAirQualityForecastData()
+                    ?: emptyList()
 
                 airResult
-                    .onSuccess { api -> airUiData = api.toAirQualityScreenData() }
+                    .onSuccess { api -> airUiData = api.toAirQualityScreenData(aqiForecastData) }
                     .onFailure { e -> errorMessage = (errorMessage ?: "") + "\nAir: ${e.message}" }
 
                 pollenResult
@@ -221,7 +243,7 @@ private fun formatWind(speed: com.example.livelifebreatheair.data.model.Speed): 
 
 // --- Air quality ----------------------------------------------------------
 
-private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScreenData {
+private fun AirQualityIndexApiResponse.toAirQualityScreenData(forecastItems: List<AirQualityForecastItem>): AirQualityScreenData {
     val firstHour = airQuality.hoursInfo.firstOrNull() ?: return MockData.airQualityScreen
 
     val mainIndex = firstHour.indexes.firstOrNull()
@@ -256,15 +278,6 @@ private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScree
         )
     }
 
-    // Chips should look like: "index" / "12–16"
-    val forecastItems = airQuality.hoursInfo.take(4).map { hour ->
-        val idx = hour.indexes.firstOrNull()
-        AirQualityForecastItem(
-            label = "index",
-            range = idx?.aqiDisplay ?: "--"
-        )
-    }
-
     return AirQualityScreenData(
         overallCategory = cleanCategory,
         index = "Index: $indexValue",
@@ -273,6 +286,47 @@ private fun AirQualityIndexApiResponse.toAirQualityScreenData(): AirQualityScree
         forecastItems = forecastItems
     )
 }
+
+// --- AirQualityForecast --------------------------------------------------
+@RequiresApi(Build.VERSION_CODES.O)
+private fun AirQualityIndexForecastResponse.toAirQualityForecastData(): List<AirQualityForecastItem> {
+
+    val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    // Parser for timestamps without timezone
+    val localParser = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+
+    return entries.take(4).map { entry ->
+        val label = run {
+            val isoZoned = runCatching {
+                Instant.parse(entry.timestamp).atZone(ZoneId.systemDefault())
+            }.getOrNull()
+
+            if (isoZoned != null)
+                return@run isoZoned.format(formatter)
+
+            val local = runCatching {
+                LocalDateTime.parse(entry.timestamp, localParser)
+            }.getOrNull()
+
+            if (local != null)
+                return@run local.format(formatter)
+
+            val match = Regex("""\b(\d{2}):(\d{2})""")
+                .find(entry.timestamp)
+                ?.value
+
+            match ?: "--"
+        }
+
+        AirQualityForecastItem(
+            label = label,
+            range = entry.aqi?.toInt()?.toString() ?: "--"
+        )
+    }
+}
+
+
 
 // --- Pollen ---------------------------------------------------------------
 
